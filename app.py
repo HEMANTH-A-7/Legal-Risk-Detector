@@ -1,6 +1,8 @@
 import os
+import sys
 import secrets
 import tempfile
+import traceback
 
 from dotenv import load_dotenv
 from flask import Flask, request, render_template, jsonify
@@ -87,42 +89,47 @@ def analyze():
         return jsonify({'error': 'No file or text provided.'}), 400
 
     # Analyze the text
-    sentences = segment_sentences(text)
-    risks = analyze_risks(sentences)
+    try:
+        sentences = segment_sentences(text)
+        risks = analyze_risks(sentences)
 
-    # Calculate summary statistics
-    total_sentences = len(sentences)
-    risky_count = len(risks)
+        # Calculate summary statistics
+        total_sentences = len(sentences)
+        risky_count = len(risks)
 
-    llm_available = bool(os.getenv("OPENAI_API_KEY"))
+        llm_available = bool(os.getenv("OPENAI_API_KEY"))
 
-    # ── Build summary with HSE severity distribution (for paper's analysis) ──
-    severity_dist = {'High': 0, 'Medium': 0, 'Low': 0}
-    detector_dist = {'transformer': 0, 'ml': 0, 'keyword': 0}
-    for r in risks:
-        sev = r.get('severity', 'Low')
-        det = r.get('detector', 'keyword')
-        severity_dist[sev] = severity_dist.get(sev, 0) + 1
-        detector_dist[det] = detector_dist.get(det, 0) + 1
+        # ── Build summary with HSE severity distribution (for paper's analysis) ──
+        severity_dist = {'High': 0, 'Medium': 0, 'Low': 0}
+        detector_dist = {'transformer': 0, 'ml': 0, 'keyword': 0}
+        for r in risks:
+            sev = r.get('severity', 'Low')
+            det = r.get('detector', 'keyword')
+            severity_dist[sev] = severity_dist.get(sev, 0) + 1
+            detector_dist[det] = detector_dist.get(det, 0) + 1
 
-    return jsonify({
-        'risks': risks,
-        'llm_available': llm_available,
-        # CCIC metadata — exposed for evaluation and paper figures
-        'ccic': {
-            'mode': os.getenv('RISK_DETECTOR', 'auto'),
-            'temperature': float(os.getenv('CCIC_TEMPERATURE', '1.5')),
-            'transformer_threshold': float(os.getenv('TRANSFORMER_THRESHOLD', '0.6')),
-            'ml_threshold': float(os.getenv('ML_RISK_THRESHOLD', '0.5')),
-            'detector_distribution': detector_dist,
-        },
-        'summary': {
-            'total_sentences': total_sentences,
-            'risky_count': risky_count,
-            'risk_percentage': round((risky_count / total_sentences * 100), 2) if total_sentences > 0 else 0,
-            'severity_distribution': severity_dist,
-        }
-    })
+        return jsonify({
+            'risks': risks,
+            'llm_available': llm_available,
+            # CCIC metadata — exposed for evaluation and paper figures
+            'ccic': {
+                'mode': os.getenv('RISK_DETECTOR', 'auto'),
+                'temperature': float(os.getenv('CCIC_TEMPERATURE', '1.5')),
+                'transformer_threshold': float(os.getenv('TRANSFORMER_THRESHOLD', '0.6')),
+                'ml_threshold': float(os.getenv('ML_RISK_THRESHOLD', '0.5')),
+                'detector_distribution': detector_dist,
+            },
+            'summary': {
+                'total_sentences': total_sentences,
+                'risky_count': risky_count,
+                'risk_percentage': round((risky_count / total_sentences * 100), 2) if total_sentences > 0 else 0,
+                'severity_distribution': severity_dist,
+            }
+        })
+    except Exception as exc:
+        tb = traceback.format_exc()
+        print(f"[ANALYZE ERROR] {exc}\n{tb}", file=sys.stderr, flush=True)
+        return jsonify({'error': f'Analysis failed: {str(exc)}', 'traceback': tb}), 500
 
 
 @app.route('/explain', methods=['POST'])

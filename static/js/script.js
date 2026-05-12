@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(data => {
         loading.style.display = 'none';
         if (data.error) {
-          alert(data.error);
+          const detail = data.traceback ? `\n\nDetails:\n${data.traceback.split('\n').slice(-5).join('\n')}` : '';
+          alert('Server error: ' + data.error + detail);
           summaryPlaceholder.style.display = 'flex';
           return;
         }
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error:', err);
         loading.style.display = 'none';
         summaryPlaceholder.style.display = 'flex';
-        alert('An error occurred while analyzing the document.');
+        alert('Network/server error: ' + err.message);
       });
   });
 
