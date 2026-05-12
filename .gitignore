@@ -1,0 +1,20 @@
+# Ignore paper files
+LexGuard_IEEE_Research_Paper.docx
+LexGuard_IEEE_Research_Paper.html
+LexGuard_IEEE_Research_Paper.md
+research_paper_part1.md
+research_paper_part2.md
+make_paper_html.py
+make_word.py
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore environment files
+.env
+
+# Ignore uploads directory
+uploads/
+
+nltk_data/

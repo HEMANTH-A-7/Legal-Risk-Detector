@@ -1,0 +1,39 @@
+sentence,label
+"The supplier may terminate this agreement at any time upon written notice.",Termination
+"Either party may terminate immediately if the other party breaches.",Termination
+"We can cancel the contract for convenience with 30 days notice.",Termination
+"This agreement automatically terminates if payment is not received.",Termination
+"Your account may be suspended or terminated without refund.",Termination
+
+"You shall pay a penalty of $500 per day for late delivery.",Penalty
+"Late payment will incur interest at 2% per month.",Penalty
+"If you miss a deadline you must pay liquidated damages.",Penalty
+"Failure to comply results in a fine and additional charges.",Penalty
+"Any delay triggers a penalty and forfeiture of the deposit.",Penalty
+
+"You agree to indemnify and hold harmless the company for all claims.",Liability
+"The company is not responsible for any damages arising from use.",Liability
+"Liability is limited to the fees paid in the last 12 months.",Liability
+"You will be responsible for all losses, costs, and expenses.",Liability
+"The provider disclaims all warranties and any liability.",Liability
+"Your liability is unlimited for any breach of confidentiality.",Liability
+
+"You must comply with all applicable laws and regulations.",Obligation
+"You shall deliver the services by the agreed deadline.",Obligation
+"The customer must maintain insurance coverage throughout the term.",Obligation
+"You are obligated to keep information confidential.",Obligation
+"The vendor is required to provide monthly reports.",Obligation
+
+"Any dispute will be resolved by binding arbitration.",Arbitration
+"Disputes must be settled through arbitration in New York.",Arbitration
+"You waive the right to go to court and agree to arbitration.",Arbitration
+"This contract requires arbitration under AAA rules.",Arbitration
+"All disputes shall be handled via dispute resolution and arbitration.",Arbitration
+
+"This agreement describes the services to be provided.",None
+"Payment is due within 30 days of invoice receipt.",None
+"The parties agree to cooperate in good faith.",None
+"This contract is governed by the laws of California.",Arbitration
+"The term of this agreement is one year.",None
+"Notices must be sent to the address listed below.",None
+"This clause is for informational purposes only.",None

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LexGuard — Legal Risk Detector</title>
+  <meta name="description"
+    content="LexGuard uses a Confidence-Calibrated Inference Cascade (CCIC) with Legal-BERT to detect and explain risky clauses in contracts for non-lawyers.">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────────────────────────── -->
+  <nav class="lexguard-nav navbar">
+    <div class="container d-flex align-items-center justify-content-between">
+      <a class="navbar-brand" href="#">
+        ⚖️ LexGuard
+        <span class="nav-badge">Research Preview</span>
+      </a>
+      <span class="nav-tech-tag">CCIC · Legal-BERT · HSE</span>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-eyebrow">Confidence-Calibrated Inference Cascade</div>
+    <h1>Legal Risk Clause Detector</h1>
+    <p class="lead">
+      Upload a contract PDF or paste text — LexGuard classifies risky clauses
+      using Legal-BERT and explains them in plain English.
+    </p>
+  </div>
+
+  <div class="container pb-5">
+
+    <!-- ── Input + Summary row ─────────────────────────────────────────────── -->
+    <div class="row g-4 mb-4">
+
+      <!-- Upload panel -->
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="card-title mb-0">📄 Analyze Document</h5>
+          </div>
+          <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+
+              <div class="mb-3">
+                <label for="file" class="form-label">Upload PDF or Text File</label>
+                <input class="form-control" type="file" id="file" name="file" accept=".pdf,.txt">
+              </div>
+
+              <div class="or-divider">OR</div>
+
+              <div class="mb-4">
+                <label for="text" class="form-label">Paste Legal Text</label>
+                <textarea class="form-control" id="text" name="text" rows="6"
+                  placeholder="Paste contract text here…"></textarea>
+              </div>
+
+              <button type="submit" class="btn-analyze" id="analyzeBtn">
+                ⚡ Analyze with LexGuard
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary panel -->
+      <div class="col-md-6">
+
+        <!-- Placeholder -->
+        <div class="card h-100" id="summaryPlaceholder">
+          <div class="card-body">
+            <div class="placeholder-inner">
+              <svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2
+                     2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0
+                     012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <p class="mb-0 fw-semibold" style="font-size:.9rem;">Upload or paste text to see results</p>
+              <p class="small mt-1" style="color:#475569;">Analysis summary and risk chart will appear here</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results card -->
+        <div class="card h-100" id="summaryCard" style="display:none;">
+          <div class="card-header">
+            <h5 class="card-title mb-0">📊 Analysis Summary</h5>
+          </div>
+          <div class="card-body">
+
+            <!-- 3 stat counters -->
+            <div class="d-flex justify-content-around text-center mb-4">
+              <div>
+                <div class="stat-value" id="totalSentences">0</div>
+                <div class="stat-label">Total Sentences</div>
+              </div>
+              <div class="stat-divider"></div>
+              <div>
+                <div class="stat-value danger" id="riskyCount">0</div>
+                <div class="stat-label">Risky Clauses</div>
+              </div>
+              <div class="stat-divider"></div>
+              <div>
+                <div class="stat-value" id="riskPercentage">0%</div>
+                <div class="stat-label">Risk Level</div>
+              </div>
+            </div>
+
+            <!-- Severity distribution -->
+            <div class="sev-dist mb-1" id="sevDist" style="display:none;"></div>
+
+            <!-- Donut chart -->
+            <div class="chart-container">
+              <canvas id="riskChart"></canvas>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loading" style="display:none;">
+      <div class="spinner-border" role="status" style="width:2.5rem;height:2.5rem;">
+        <span class="visually-hidden">Loading…</span>
+      </div>
+      <p class="loading-text">Running CCIC pipeline… this may take a moment.</p>
+    </div>
+
+    <!-- ── Results row ──────────────────────────────────────────────────── -->
+    <div class="row" id="resultsRow" style="display:none;">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="card-title mb-0">🔍 Detected Risk Clauses</h5>
+            <span class="badge" id="resultsBadge"
+                  style="background:rgba(99,102,241,0.2);color:#a78bfa;font-size:.76rem;font-weight:700;
+                         border-radius:20px;padding:4px 14px;border:1px solid rgba(99,102,241,0.35);">
+              0 Risky Clauses Found
+            </span>
+          </div>
+
+          <!-- CCIC info bar -->
+          <div class="px-3 pt-3">
+            <div class="ccic-bar" id="ccicBar" style="display:none;"></div>
+          </div>
+
+          <div class="card-body">
+            <div id="resultsList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <p class="mb-1">
+        <strong style="color:#94a3b8;">LexGuard</strong> — Confidence-Calibrated Inference Cascade for Legal Contract Risk Detection
+      </p>
+      <p class="mb-0">
+        Research prototype ·
+        <a href="https://huggingface.co/spaces/Hemanth021/legal-risk-detector" target="_blank">HuggingFace Space</a>
+        · © 2026
+      </p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS + Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

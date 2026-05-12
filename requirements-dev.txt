@@ -1,0 +1,6 @@
+kaggle
+datasets
+pandas
+transformers
+accelerate
+torch

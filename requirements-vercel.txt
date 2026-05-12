@@ -1,0 +1,10 @@
+# Vercel-specific requirements (no transformers/torch — 250 MB serverless limit)
+# Vercel deployment uses CCIC Tier 2 (TF-IDF+LR) + Tier 3 (keyword) only.
+# Set RISK_DETECTOR=ml in Vercel environment variables.
+flask
+pdfplumber
+nltk
+openai
+python-dotenv
+scikit-learn
+joblib

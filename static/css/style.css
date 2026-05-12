@@ -1,0 +1,503 @@
+/* ─── LexGuard — Premium Dark Glassmorphism UI ───────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --primary:       #6366f1;
+  --primary-dark:  #4338ca;
+  --primary-glow:  rgba(99,102,241,0.35);
+  --accent:        #a78bfa;
+  --danger:        #f87171;
+  --warning:       #fbbf24;
+  --success:       #34d399;
+  --info:          #38bdf8;
+  --bg:            #0b0f1a;
+  --bg2:           #111827;
+  --glass:         rgba(255,255,255,0.05);
+  --glass-border:  rgba(255,255,255,0.10);
+  --glass-hover:   rgba(255,255,255,0.09);
+  --text:          #f1f5f9;
+  --text-muted:    #94a3b8;
+  --text-dim:      #64748b;
+  --radius:        16px;
+  --radius-sm:     10px;
+  --shadow:        0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow:   0 0 40px rgba(99,102,241,0.2);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animated background mesh ────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(99,102,241,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(167,139,250,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(56,189,248,0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.lexguard-nav {
+  background: rgba(11,15,26,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0.9rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.lexguard-nav .navbar-brand {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lexguard-nav .nav-badge {
+  font-size: 0.6rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.nav-tech-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  text-align: center;
+  padding: 4rem 1rem 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  padding: 4px 14px;
+  border: 1px solid rgba(167,139,250,0.3);
+  border-radius: 20px;
+  background: rgba(167,139,250,0.08);
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--info) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.15;
+}
+.hero p.lead {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Cards — Glassmorphism ───────────────────────────────────────────────── */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+  z-index: 1;
+}
+.card:hover {
+  border-color: rgba(99,102,241,0.35);
+  box-shadow: var(--shadow), var(--shadow-glow);
+}
+.card-header {
+  background: rgba(255,255,255,0.03) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+}
+.card-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-body { padding: 1.25rem; }
+
+/* ── Upload form ─────────────────────────────────────────────────────────── */
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.form-control {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text) !important;
+  font-size: 0.9rem;
+}
+.form-control:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+  background: rgba(255,255,255,0.08) !important;
+  outline: none;
+}
+.form-control::placeholder { color: var(--text-dim) !important; }
+textarea.form-control { resize: vertical; }
+input[type="file"].form-control { cursor: pointer; }
+
+.btn-analyze {
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.2px;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  position: relative;
+  overflow: hidden;
+}
+.btn-analyze::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn-analyze:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.5); }
+.btn-analyze:hover::before { opacity: 1; }
+.btn-analyze:active { transform: translateY(0); }
+
+.or-divider {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  position: relative;
+  margin: 0.85rem 0;
+}
+.or-divider::before, .or-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 1px;
+  background: var(--glass-border);
+}
+.or-divider::before { left: 0; }
+.or-divider::after  { right: 0; }
+
+/* ── Summary stats ───────────────────────────────────────────────────────── */
+.stat-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #fff, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-value.danger { background: linear-gradient(135deg, var(--danger), #fb923c); -webkit-background-clip: text; background-clip: text; }
+.stat-label {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+.stat-divider {
+  width: 1px;
+  background: var(--glass-border);
+  align-self: stretch;
+  margin: 0 0.5rem;
+}
+
+/* ── Chart container ─────────────────────────────────────────────────────── */
+.chart-container {
+  position: relative;
+  height: 200px;
+  margin-top: 1rem;
+}
+#riskChart { max-height: 200px; }
+
+/* ── CCIC info bar ───────────────────────────────────────────────────────── */
+.ccic-bar {
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.ccic-bar strong { font-weight: 700; color: #fff; }
+.ccic-pill {
+  background: rgba(99,102,241,0.18);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 20px;
+  padding: 1px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+/* ── Severity distribution pills ─────────────────────────────────────────── */
+.sev-dist { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.75rem; }
+.sev-pill {
+  border-radius: 20px;
+  padding: 3px 14px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.sev-pill.high   { background: rgba(248,113,113,0.15); color: var(--danger);  border: 1px solid rgba(248,113,113,0.3); }
+.sev-pill.medium { background: rgba(251,191,36,0.12);  color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
+.sev-pill.low    { background: rgba(52,211,153,0.12);  color: var(--success); border: 1px solid rgba(52,211,153,0.3); }
+
+/* ── Risk clause cards ───────────────────────────────────────────────────── */
+.risk-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+  padding: 1rem 1.25rem 1rem 1.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+.risk-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.risk-card:active { transform: translateY(0); }
+
+.risk-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+.risk-card.sev-high   { border-color: rgba(248,113,113,0.25); }
+.risk-card.sev-medium { border-color: rgba(251,191,36,0.25); }
+.risk-card.sev-low    { border-color: rgba(52,211,153,0.2); }
+.risk-card.sev-high::before   { background: linear-gradient(180deg, var(--danger), #dc2626); }
+.risk-card.sev-medium::before { background: linear-gradient(180deg, var(--warning), #d97706); }
+.risk-card.sev-low::before    { background: linear-gradient(180deg, var(--success), #059669); }
+
+.risk-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.risk-type-label {
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.severity-badge {
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.severity-badge.high   { background: rgba(248,113,113,0.15); color: var(--danger);  border: 1px solid rgba(248,113,113,0.3); }
+.severity-badge.medium { background: rgba(251,191,36,0.12);  color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
+.severity-badge.low    { background: rgba(52,211,153,0.12);  color: var(--success); border: 1px solid rgba(52,211,153,0.3); }
+
+.risk-sentence {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 0.6rem;
+  line-height: 1.55;
+}
+
+/* ── Score bar ───────────────────────────────────────────────────────────── */
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.score-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+}
+.score-bar-fill.high   { background: linear-gradient(90deg, #fb923c, var(--danger)); }
+.score-bar-fill.medium { background: linear-gradient(90deg, #fde68a, var(--warning)); }
+.score-bar-fill.low    { background: linear-gradient(90deg, #6ee7b7, var(--success)); }
+.score-label {
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  min-width: 38px;
+  text-align: right;
+}
+
+/* ── Meta chips ──────────────────────────────────────────────────────────── */
+.risk-meta {
+  font-size: 0.73rem;
+  color: var(--text-dim);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.meta-chip {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.69rem;
+  color: var(--text-dim);
+}
+.meta-chip.tier-t { background: rgba(99,102,241,0.15);  border-color: rgba(99,102,241,0.3);  color: var(--accent); }
+.meta-chip.tier-m { background: rgba(52,211,153,0.12);  border-color: rgba(52,211,153,0.3);  color: var(--success); }
+.meta-chip.tier-k { background: rgba(251,191,36,0.10);  border-color: rgba(251,191,36,0.3);  color: var(--warning); }
+
+.toggle-hint {
+  font-size: 0.72rem;
+  color: var(--primary);
+  cursor: pointer;
+  margin-top: 0.2rem;
+  display: inline-block;
+  transition: color 0.2s;
+}
+.toggle-hint:hover { color: var(--accent); }
+
+/* ── Explanation box ─────────────────────────────────────────────────────── */
+.explanation-box {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  display: none;
+}
+.explanation-box.open { display: block; animation: fadeIn 0.2s ease; }
+.explanation-box strong { color: var(--text); }
+.explanation-spinner { color: var(--primary); font-size: 0.82rem; }
+
+/* ── Placeholder ─────────────────────────────────────────────────────────── */
+#summaryPlaceholder {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.placeholder-inner { text-align: center; color: var(--text-dim); }
+.placeholder-inner svg { opacity: 0.25; margin-bottom: 1rem; }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+#loading { padding: 3rem 0; text-align: center; }
+.spinner-border { color: var(--primary) !important; }
+.loading-text { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.75rem; }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-dim);
+}
+.empty-state svg { opacity: 0.25; margin-bottom: 1rem; }
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.risk-card { animation: slideUp 0.3s ease both; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+footer {
+  margin-top: 5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--glass-border);
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  position: relative;
+  z-index: 1;
+}
+footer a { color: var(--primary); text-decoration: none; }
+footer a:hover { color: var(--accent); }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 99px; }
+
+/* ── Bootstrap overrides ─────────────────────────────────────────────────── */
+.container { position: relative; z-index: 1; }
+.row { --bs-gutter-x: 1.5rem; }
