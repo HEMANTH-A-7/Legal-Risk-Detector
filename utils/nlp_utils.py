@@ -49,10 +49,19 @@ from utils.ml_classifier import predict_label
 from utils.severity_estimator import estimate_severity, severity_score
 from utils.calibration import calibrate_confidence
 
-# Set local nltk_data path — must be registered before any sent_tokenize call
-nltk_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'nltk_data')
-if nltk_data_dir not in nltk.data.path:
-    nltk.data.path.append(nltk_data_dir)
+# Ensure NLTK punkt tokenizer is available — download silently if missing.
+# This covers HF Spaces (where nltk_data/ is not committed) and fresh installs.
+def _ensure_nltk():
+    for resource in ('punkt', 'punkt_tab'):
+        try:
+            nltk.data.find(f'tokenizers/{resource}')
+        except LookupError:
+            try:
+                nltk.download(resource, quiet=True)
+            except Exception:
+                pass
+
+_ensure_nltk()
 
 # ─── Risk Keywords Dictionary ─────────────────────────────────────────────────
 # Used in Tier 3 (deterministic keyword fallback) of the CCIC.
@@ -86,10 +95,20 @@ def extract_text_from_pdf(file_path):
 
 
 def segment_sentences(text):
-    """Splits text into individual sentences using NLTK punkt tokenizer."""
+    """Splits text into individual sentences using NLTK punkt tokenizer.
+    Falls back to a simple regex split if the punkt model is unavailable.
+    """
     if not text:
         return []
-    return sent_tokenize(text)
+    try:
+        return sent_tokenize(text)
+    except LookupError:
+        # Fallback: split on '. ', '! ', '? ' boundaries
+        _ensure_nltk()
+        try:
+            return sent_tokenize(text)
+        except Exception:
+            return [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
 
 
 def detect_risk_types(sentence: str):
