@@ -8,11 +8,38 @@ pinned: false
 license: mit
 ---
 
+<div align="center">
+
+# ⚖️ LexGuard — Legal Contract Risk Detector
+
+### *AI-powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade*
+
+<br/>
+
+[![🚀 Live Demo on Hugging Face](https://img.shields.io/badge/🚀%20Live%20Demo-Hugging%20Face%20Spaces-FF4B4B?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+[![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
+[![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
+
+<br/>
+
+> ### 👉 [**Try the Live App → huggingface.co/spaces/Hemanth021/legal-risk-detector**](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+> *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
+
+<br/>
+
+| 🔬 Architecture | 📊 Performance | 🗂️ Training Data | 🚀 Deployment |
+|:---:|:---:|:---:|:---:|
+| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on HF Spaces |
+
+</div>
+
+---
+
 # LexGuard — A Confidence-Calibrated Inference Cascade for Legal Contract Risk Detection
 
 > **"LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid Severity Estimation for Legal Contract Risk Detection"**
 >
-> *Research Prototype — [Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)*
+> *Research Prototype — deployed at [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)*
 
 ---
 
@@ -240,17 +267,18 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 
 ---
 
-## Deployment
+## 🚀 Deployment
 
-### Hugging Face Spaces (Full CCIC — all 3 tiers)
-🔗 [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+<div align="center">
 
-Deployed via Docker. All three CCIC tiers active (Legal-BERT + ML + Keyword).
+| Platform | URL | Tiers Active | Notes |
+|:---|:---|:---|:---|
+| **🤗 Hugging Face Spaces** | [**→ Live Demo**](https://huggingface.co/spaces/Hemanth021/legal-risk-detector) | ✅ All 3 (BERT + ML + Keyword) | Full CCIC, Docker |
+| **▲ Vercel** | [nlp-project-alpha.vercel.app](https://nlp-project-alpha.vercel.app) | ⚡ Tier 2 + 3 only | No transformer (250 MB limit) |
 
-### Vercel (Tier 2 + Tier 3 only)
-🔗 [nlp-project-alpha.vercel.app](https://nlp-project-alpha.vercel.app)
+</div>
 
-Vercel's 250 MB serverless limit excludes the 328 MB transformer. `RISK_DETECTOR=ml` is set automatically. Uses `requirements-vercel.txt` (no torch/transformers).
+> **Recommended:** Use the [Hugging Face deployment](https://huggingface.co/spaces/Hemanth021/legal-risk-detector) for the full Legal-BERT powered experience.
 
 ---
 
