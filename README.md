@@ -269,16 +269,11 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 
 ## 🚀 Deployment
 
-<div align="center">
+LexGuard is containerized via Docker and deployed to **Hugging Face Spaces**.
 
-| Platform | URL | Tiers Active | Notes |
-|:---|:---|:---|:---|
-| **🤗 Hugging Face Spaces** | [**→ Live Demo**](https://huggingface.co/spaces/Hemanth021/legal-risk-detector) | ✅ All 3 (BERT + ML + Keyword) | Full CCIC, Docker |
-| **▲ Vercel** | [nlp-project-alpha.vercel.app](https://nlp-project-alpha.vercel.app) | ⚡ Tier 2 + 3 only | No transformer (250 MB limit) |
+> [!TIP]
+> **Live Demo:** [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
 
-</div>
-
-> **Recommended:** Use the [Hugging Face deployment](https://huggingface.co/spaces/Hemanth021/legal-risk-detector) for the full Legal-BERT powered experience.
 
 ---
 
