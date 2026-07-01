@@ -16,13 +16,13 @@ license: mit
 
 <br/>
 
-[![🚀 Live Demo on Hugging Face](https://img.shields.io/badge/🚀%20Live%20Demo-Hugging%20Face%20Spaces-FF4B4B?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+[![🚀 Live Demo on Hugging Face](https://img.shields.io/badge/🚀%20Live%20Demo-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://lexguard-app-production.up.railway.app)
 [![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
 
 <br/>
 
-> ### 👉 [**Try the Live App → huggingface.co/spaces/Hemanth021/legal-risk-detector**](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+> ### 👉 [**Try the Live App → lexguard-app-production.up.railway.app**](https://lexguard-app-production.up.railway.app)
 > *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
 
 <br/>
@@ -39,7 +39,7 @@ license: mit
 
 > **"LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid Severity Estimation for Legal Contract Risk Detection"**
 >
-> *Research Prototype — deployed at [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)*
+> *Research Prototype — deployed at [lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)*
 
 ---
 
@@ -272,7 +272,7 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 LexGuard is containerized via Docker and deployed to **Hugging Face Spaces**.
 
 > [!TIP]
-> **Live Demo:** [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+> **Live Demo:** [lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
 
 
 ---

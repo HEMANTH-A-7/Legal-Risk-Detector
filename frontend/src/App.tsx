@@ -977,12 +977,12 @@ export const App: React.FC = () => {
 
           <div className="flex justify-center gap-8 text-xs uppercase tracking-wider font-bold">
             <a 
-              href="https://huggingface.co/spaces/Hemanth021/legal-risk-detector" 
+              href="https://lexguard-app-production.up.railway.app" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white hover:text-white/60 transition-colors"
             >
-              HuggingFace Space
+              Railway
             </a>
             <span>·</span>
             <a 
