@@ -39,8 +39,8 @@ ENV TRANSFORMER_THRESHOLD=0.6
 ENV ML_RISK_THRESHOLD=0.5
 ENV TRANSFORMER_MODEL_DIR=models/transformer_risk_classifier
 
-# HuggingFace Spaces routes external traffic to port 7860
-EXPOSE 7860
+# Railway injects $PORT at runtime; fallback to 8000 for local runs
+EXPOSE ${PORT:-8000}
 
-# Run with gunicorn — 2 workers for memory efficiency on HF free tier
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "-w", "2", "app:app"]
+# Run with gunicorn — 2 workers, bind to Railway's dynamic port
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-8000} -w 2 app:app"]
