@@ -47,8 +47,6 @@ interface GitHubProfile {
   avatar_url: string;
   html_url: string;
   bio: string;
-  public_repos: number;
-  followers: number;
 }
 
 export const App: React.FC = () => {
@@ -90,7 +88,7 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch GitHub profile details
+  // Fetch GitHub profile details (removed public repos and followers)
   useEffect(() => {
     fetch('https://api.github.com/users/HEMANTH-A-7')
       .then(res => res.json())
@@ -101,9 +99,7 @@ export const App: React.FC = () => {
             login: data.login,
             avatar_url: data.avatar_url,
             html_url: data.html_url,
-            bio: data.bio || 'AI / ML Developer & Researcher',
-            public_repos: data.public_repos,
-            followers: data.followers
+            bio: data.bio || 'AI / ML Developer & Researcher'
           });
         }
       })
@@ -409,7 +405,10 @@ export const App: React.FC = () => {
               className="inline-flex items-center justify-center bg-black text-white border border-black/10 rounded-full text-[14px] sm:text-[16px] px-7 py-3.5 cursor-pointer hover:bg-white hover:text-black hover:scale-105 active:scale-95 transition-all duration-200 shadow-xl font-bold gap-2.5"
             >
               <span>Analyze Document</span>
-              <span className="text-[18px] leading-none">✳︎</span>
+              <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
             </button>
           </div>
         </div>
@@ -562,7 +561,7 @@ export const App: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center py-3.5 bg-white text-black font-black text-[15px] uppercase tracking-wider rounded-xl cursor-pointer hover:bg-white/90 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xl"
+                className="w-full flex items-center justify-center py-3.5 bg-white text-black font-black text-[15px] uppercase tracking-wider rounded-xl cursor-pointer hover:bg-white/90 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xl gap-2"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -573,7 +572,12 @@ export const App: React.FC = () => {
                     <span>Running CCIC Pipeline...</span>
                   </div>
                 ) : (
-                  <span>⚡ Analyze with LexGuard</span>
+                  <>
+                    <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Analyze with LexGuard</span>
+                  </>
                 )}
               </button>
             </form>
@@ -592,8 +596,13 @@ export const App: React.FC = () => {
               
               {/* Summary details card */}
               <div className="bg-white text-black rounded-2xl p-6 sm:p-8 border border-black/10 shadow-2xl transition-all">
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight border-b border-black/10 pb-4 mb-6 font-heading">
-                  📊 Analysis Summary
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight border-b border-black/10 pb-4 mb-6 font-heading flex items-center gap-2">
+                  <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                  <span>Analysis Summary</span>
                 </h3>
 
                 {/* Stat numbers */}
@@ -665,18 +674,39 @@ export const App: React.FC = () => {
                   </span>
                 </div>
                 
-                <div className="flex items-center gap-4 text-[11px] font-mono border-t border-white/5 sm:border-t-0 pt-2 sm:pt-0">
-                  <span className="title" title="Classified by transformer model">⚡ Trans: {analysisResult.ccic.detector_distribution.transformer || 0}</span>
-                  <span className="title" title="Classified by ML classifier">🤖 ML: {analysisResult.ccic.detector_distribution.ml || 0}</span>
-                  <span className="title" title="Classified by heuristic keywords">🔑 Key: {analysisResult.ccic.detector_distribution.keyword || 0}</span>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-mono border-t border-white/5 sm:border-t-0 pt-2 sm:pt-0">
+                  <span className="flex items-center gap-1.5 text-purple-400" title="Classified by transformer model">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Trans: {analysisResult.ccic.detector_distribution.transformer || 0}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-blue-400" title="Classified by ML classifier">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                      <circle cx="12" cy="5" r="2"></circle>
+                      <path d="M12 7v4"></path>
+                    </svg>
+                    <span>ML: {analysisResult.ccic.detector_distribution.ml || 0}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-400" title="Classified by heuristic keywords">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5"></path>
+                    </svg>
+                    <span>Key: {analysisResult.ccic.detector_distribution.keyword || 0}</span>
+                  </span>
                 </div>
               </div>
 
               {/* Detected risks list */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b border-white/10">
-                  <h4 className="text-lg font-black uppercase tracking-wider text-white font-heading">
-                    🔍 Detected Anomalies
+                  <h4 className="text-lg font-black uppercase tracking-wider text-white font-heading flex items-center gap-2">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Detected Anomalies</span>
                   </h4>
                   <span className="text-xs bg-white/10 px-3 py-1 rounded-full text-white/80 font-bold border border-white/5 font-heading">
                     {analysisResult.risks.length} Risk Clauses
@@ -758,14 +788,37 @@ export const App: React.FC = () => {
                           {/* Meta tags line */}
                           <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/40 border-t border-white/5 pt-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded font-mono text-[9px] ${
+                              <span className={`px-2 py-0.5 rounded font-mono text-[9px] flex items-center gap-1.5 ${
                                 risk.detector === 'transformer' 
                                   ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
                                   : risk.detector === 'ml'
                                     ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                     : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                               }`}>
-                                {risk.detector === 'transformer' ? '⚡ Transformer' : risk.detector === 'ml' ? '🤖 ML' : '🔑 Keyword'}
+                                {risk.detector === 'transformer' ? (
+                                  <>
+                                    <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span>Transformer</span>
+                                  </>
+                                ) : risk.detector === 'ml' ? (
+                                  <>
+                                    <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                                      <circle cx="12" cy="5" r="2"></circle>
+                                      <path d="M12 7v4"></path>
+                                    </svg>
+                                    <span>ML</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5"></path>
+                                    </svg>
+                                    <span>Keyword</span>
+                                  </>
+                                )}
                               </span>
                               {typeof risk.confidence === 'number' && (
                                 <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 font-mono text-[9px]">
@@ -773,8 +826,17 @@ export const App: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <span className="text-white hover:text-white/80 transition-colors flex items-center gap-1 font-bold">
-                              {isExpanded ? '▴ Hide' : '▾ Explain'}
+                            <span className="text-white hover:text-white/80 transition-colors flex items-center gap-1.5 font-bold">
+                              <span>{isExpanded ? 'Hide' : 'Explain'}</span>
+                              {isExpanded ? (
+                                <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg>
+                              ) : (
+                                <svg className="w-3 h-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              )}
                             </span>
                           </div>
 
@@ -830,7 +892,7 @@ export const App: React.FC = () => {
             </p>
           </div>
 
-          {/* User Profile Details Fetched dynamically from GitHub */}
+          {/* User Profile Details Fetched dynamically from GitHub (Removed repos & followers stats) */}
           {githubProfile && (
             <div className="max-w-sm mx-auto bg-white/[0.03] border border-white/10 rounded-xl p-4 flex items-center gap-4 text-left shadow-lg backdrop-blur-sm animate-fadeIn">
               <a 
@@ -860,16 +922,6 @@ export const App: React.FC = () => {
                 <p className="text-[11px] text-white/70 mt-1 line-clamp-2 leading-snug font-body font-light">
                   {githubProfile.bio}
                 </p>
-              </div>
-              <div className="shrink-0 text-right border-l border-white/10 pl-3">
-                <div className="text-[11px] font-mono">
-                  <span className="text-white font-bold">{githubProfile.public_repos}</span>
-                  <span className="text-white/40 block text-[9px] uppercase tracking-wider">Repos</span>
-                </div>
-                <div className="text-[11px] font-mono mt-1">
-                  <span className="text-white font-bold">{githubProfile.followers}</span>
-                  <span className="text-white/40 block text-[9px] uppercase tracking-wider">Followers</span>
-                </div>
               </div>
             </div>
           )}
