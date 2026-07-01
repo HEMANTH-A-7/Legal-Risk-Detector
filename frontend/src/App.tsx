@@ -1,0 +1,867 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useTypewriter } from './hooks/useTypewriter';
+
+interface DetectorDistribution {
+  transformer: number;
+  ml: number;
+  keyword: number;
+}
+
+interface CCICMetadata {
+  mode: string;
+  transformer_threshold: number;
+  ml_threshold: number;
+  temperature: number;
+  detector_distribution: DetectorDistribution;
+}
+
+interface SummaryStatistics {
+  total_sentences: number;
+  risky_count: number;
+  risk_percentage: number;
+  severity_distribution: Record<string, number>;
+}
+
+interface RiskClause {
+  original_sentence: string;
+  risk_type: string;
+  severity: 'High' | 'Medium' | 'Low';
+  severity_score: number;
+  confidence: number;
+  detector: 'transformer' | 'ml' | 'keyword';
+  explanation?: string;
+}
+
+interface AnalysisResponse {
+  risks: RiskClause[];
+  llm_available: boolean;
+  ccic: CCICMetadata;
+  summary: SummaryStatistics;
+  error?: string;
+  traceback?: string;
+}
+
+export const App: React.FC = () => {
+  // Input states
+  const [file, setFile] = useState<File | null>(null);
+  const [textInput, setTextInput] = useState('');
+  
+  // App UI states
+  const [isLoading, setIsLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showPills, setShowPills] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  
+  // Explanation caching & states
+  const [expandedClauses, setExpandedClauses] = useState<Record<number, boolean>>({});
+  const [explanations, setExplanations] = useState<Record<number, string>>({});
+  const [loadingExplanations, setLoadingExplanations] = useState<Record<number, boolean>>({});
+
+  // Refs for video scrub & scrolling
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const prevXRef = useRef<number | null>(null);
+  const targetTimeRef = useRef<number>(0);
+  const isSeekingRef = useRef<boolean>(false);
+  const analyzerSectionRef = useRef<HTMLDivElement>(null);
+  const contactSectionRef = useRef<HTMLDivElement>(null);
+
+  // Typewriter hook
+  const typewriterText = "Glad you stopped in. Good taste tends to find us. Now, what are we building?";
+  const { displayed: typedText, done: typewriterDone } = useTypewriter(typewriterText, 38, 600);
+
+  // 400ms delay for action pills independent of typewriter completion
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPills(true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Video scrub event listener
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const video = videoRef.current;
+      if (!video || isNaN(video.duration) || video.duration === 0) return;
+
+      const currentX = e.clientX;
+      if (prevXRef.current === null) {
+        prevXRef.current = currentX;
+        return;
+      }
+
+      const delta = currentX - prevXRef.current;
+      prevXRef.current = currentX;
+
+      const SENSITIVITY = 0.8;
+      const deltaRatio = delta / window.innerWidth;
+      
+      let newTime = targetTimeRef.current + (deltaRatio * SENSITIVITY * video.duration);
+      // Clamp between 0 and video duration
+      newTime = Math.max(0, Math.min(newTime, video.duration));
+      targetTimeRef.current = newTime;
+
+      if (!isSeekingRef.current) {
+        isSeekingRef.current = true;
+        video.currentTime = newTime;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  const handleSeeked = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.05) {
+      // Target time moved during seek, continue seeking
+      video.currentTime = targetTimeRef.current;
+    } else {
+      isSeekingRef.current = false;
+    }
+  };
+
+  // Scroll utilities
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMobileMenuOpen(false);
+  };
+
+  // Email copy utility
+  const copyEmailToClipboard = () => {
+    navigator.clipboard.writeText('hello@mainframe.co').then(() => {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    });
+  };
+
+  // Handle form submission
+  const handleAnalyze = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file && !textInput.trim()) {
+      alert('Please upload a file or paste contract text to analyze.');
+      return;
+    }
+
+    setIsLoading(true);
+    setAnalysisResult(null);
+    setExpandedClauses({});
+    setExplanations({});
+    setLoadingExplanations({});
+
+    const formData = new FormData();
+    if (file) {
+      formData.append('file', file);
+    } else {
+      formData.append('text', textInput);
+    }
+
+    try {
+      const response = await fetch('/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      
+      setIsLoading(false);
+      if (data.error) {
+        const detail = data.traceback 
+          ? `\n\nDetails:\n${data.traceback.split('\n').slice(-5).join('\n')}` 
+          : '';
+        alert('Server Error: ' + data.error + detail);
+        return;
+      }
+
+      setAnalysisResult(data);
+      // Wait for DOM layout, then scroll to results
+      setTimeout(() => {
+        const resultsEl = document.getElementById('results-dashboard');
+        if (resultsEl) {
+          resultsEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } catch (err: any) {
+      setIsLoading(false);
+      alert('Network/Server error: ' + err.message);
+    }
+  };
+
+  // Lazy load AI explanations
+  const toggleExplanation = async (idx: number, risk: RiskClause, llmAvailable: boolean) => {
+    const isExpanded = !!expandedClauses[idx];
+    setExpandedClauses(prev => ({ ...prev, [idx]: !isExpanded }));
+
+    // If we're opening and don't have explanation yet
+    if (!isExpanded && !explanations[idx]) {
+      if (!llmAvailable) {
+        // Fallback description is already stored in the risk object, or template logic handles it
+        setExplanations(prev => ({ 
+          ...prev, 
+          [idx]: risk.explanation || 'Template-based analysis suggests reviewing liability liability limits.' 
+        }));
+        return;
+      }
+
+      setLoadingExplanations(prev => ({ ...prev, [idx]: true }));
+      try {
+        const resp = await fetch('/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sentence: risk.original_sentence,
+            risk_type: risk.risk_type,
+            severity: risk.severity,
+          })
+        });
+        const payload = await resp.json();
+        
+        setLoadingExplanations(prev => ({ ...prev, [idx]: false }));
+        if (resp.ok && payload.explanation) {
+          setExplanations(prev => ({ ...prev, [idx]: payload.explanation }));
+        } else {
+          setExplanations(prev => ({ ...prev, [idx]: payload.error || 'Failed to generate explanation.' }));
+        }
+      } catch (err: any) {
+        setLoadingExplanations(prev => ({ ...prev, [idx]: false }));
+        setExplanations(prev => ({ ...prev, [idx]: 'Unable to connect to explanation backend.' }));
+      }
+    }
+  };
+
+  // Interactive Custom SVG Doughnut Chart Calculation
+  const renderSvgDoughnut = () => {
+    if (!analysisResult || analysisResult.risks.length === 0) return null;
+    
+    // Group risk types
+    const counts: Record<string, number> = {};
+    analysisResult.risks.forEach(r => {
+      counts[r.risk_type] = (counts[r.risk_type] || 0) + 1;
+    });
+
+    const categories = Object.keys(counts);
+    const dataValues = Object.values(counts);
+    const total = dataValues.reduce((a, b) => a + b, 0);
+
+    const colors = ['#000000', '#333333', '#666666', '#999999', '#cccccc'];
+    
+    const radius = 50;
+    const strokeWidth = 14;
+    const circumference = 2 * Math.PI * radius;
+    
+    let accumulatedCircumference = 0;
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-8 my-6">
+        {/* SVG Circle */}
+        <div className="relative w-44 h-44">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+            {/* Background ring */}
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="transparent"
+              stroke="#f3f4f6"
+              strokeWidth={strokeWidth}
+            />
+            {categories.map((cat, idx) => {
+              const val = counts[cat];
+              const pct = val / total;
+              const strokeLength = pct * circumference;
+              const strokeOffset = circumference - strokeLength + accumulatedCircumference;
+              accumulatedCircumference -= strokeLength;
+
+              return (
+                <circle
+                  key={cat}
+                  cx="60"
+                  cy="60"
+                  r={radius}
+                  fill="transparent"
+                  stroke={colors[idx % colors.length]}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeOffset}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out"
+                />
+              );
+            })}
+          </svg>
+          {/* Middle text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-black tracking-tight">{total}</span>
+            <span className="text-[10px] uppercase tracking-wider text-black/40 font-medium">Risk Clauses</span>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-col gap-2.5 max-w-[220px]">
+          {categories.map((cat, idx) => (
+            <div key={cat} className="flex items-center gap-3">
+              <span 
+                className="w-3.5 h-3.5 rounded-full shrink-0 border border-black/10" 
+                style={{ backgroundColor: colors[idx % colors.length] }}
+              />
+              <div className="flex justify-between items-center w-full gap-4">
+                <span className="text-[14px] font-medium text-black/80 truncate leading-none">{cat}</span>
+                <span className="text-[14px] font-black text-black leading-none">{counts[cat]}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="relative min-h-screen selection:bg-black/10 text-black">
+      
+      {/* ── BACKGROUND VIDEO (mouse-scrub controlled) ────────────────────── */}
+      <video
+        ref={videoRef}
+        onSeeked={handleSeeked}
+        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
+        style={{ objectPosition: '70% center' }}
+        muted
+        playsInline
+        preload="auto"
+      >
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4" type="video/mp4" />
+      </video>
+
+      {/* Subtle overlay to ensure general contrast across various portions of the video */}
+      <div className="fixed inset-0 bg-white/5 z-[1] pointer-events-none" />
+
+      {/* ── NAVBAR (fixed, z-index: 10) ──────────────────────────────────── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-5 sm:px-8 py-4 sm:py-5 border-b border-black/5 backdrop-blur-md bg-white/20">
+        
+        {/* Logo (left) */}
+        <div 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+          className="flex items-center gap-3 cursor-pointer group select-none"
+        >
+          <span className="text-[21px] sm:text-[26px] tracking-tight text-black font-heading font-medium leading-none">
+            LexGuard®
+          </span>
+          <span className="text-[25px] sm:text-[30px] text-black select-none tracking-tighter leading-none -mt-1 group-hover:rotate-45 transition-transform duration-300">
+            ✳︎
+          </span>
+        </div>
+
+        {/* Desktop Nav Links (center) */}
+        <div className="hidden md:flex items-center text-[23px] text-black font-light leading-none">
+          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Labs</button>
+          <span className="mx-1 select-none font-normal">, </span>
+          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Studio</button>
+          <span className="mx-1 select-none font-normal">, </span>
+          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Openings</button>
+          <span className="mx-1 select-none font-normal">, </span>
+          <button onClick={() => scrollToSection(contactSectionRef)} className="hover:opacity-60 transition-opacity">Shop</button>
+        </div>
+
+        {/* Desktop CTA (right) */}
+        <div className="hidden md:block">
+          <button 
+            onClick={() => scrollToSection(contactSectionRef)} 
+            className="text-[23px] text-black underline underline-offset-4 hover:opacity-60 transition-opacity"
+          >
+            Get in touch
+          </button>
+        </div>
+
+        {/* Mobile Hamburger Button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-[5px] focus:outline-none z-50 cursor-pointer"
+          aria-label="Toggle Menu"
+        >
+          <span className={`w-6 h-[2px] bg-black transition-all duration-300 transform origin-center ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+          <span className={`w-6 h-[2px] bg-black transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+          <span className={`w-6 h-[2px] bg-black transition-all duration-300 transform origin-center ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+        </button>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      <div 
+        className={`fixed inset-0 bg-white/97 backdrop-blur-md z-40 flex flex-col justify-center px-8 gap-8 transition-all duration-300 md:hidden ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Labs</button>
+        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Studio</button>
+        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Openings</button>
+        <button onClick={() => scrollToSection(contactSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Shop</button>
+        <div className="h-[1px] bg-black/10 my-2" />
+        <button onClick={() => scrollToSection(contactSectionRef)} className="text-[32px] font-medium text-left text-black underline underline-offset-4 hover:opacity-60 transition-opacity">Get in touch</button>
+      </div>
+
+      {/* ── HERO SECTION (z-index: 1) ────────────────────────────────────── */}
+      <section className="relative h-screen w-full flex flex-col justify-end pb-12 md:justify-center md:pb-0 px-5 sm:px-8 md:px-10 overflow-hidden z-10 select-none">
+        <div className="max-w-xl relative z-10">
+          
+          {/* Blurred intro label */}
+          <div 
+            className="pointer-events-none select-none mb-5 sm:mb-6 leading-[1.3] text-black filter blur-[1px] tracking-tight"
+            style={{ fontSize: 'clamp(18px, 4vw, 26px)' }}
+          >
+            Hey there, meet A.R.I.A,
+            <br />
+            Mainframe's Adaptive Response Interface Agent
+          </div>
+
+          {/* Typewriter text */}
+          <div 
+            className="text-black mb-5 sm:mb-6 font-light leading-[1.35] min-height-[54px] tracking-tight font-body"
+            style={{ fontSize: 'clamp(18px, 4vw, 26px)' }}
+          >
+            {typedText}
+            {!typewriterDone && (
+              <span className="inline-block w-[2px] h-[1.1em] bg-black align-middle ml-[2px] animate-cursor-blink" />
+            )}
+          </div>
+
+          {/* Action pills (Fade-in & Slide-up 400ms after load) */}
+          <div 
+            className={`flex flex-wrap gap-y-1 transition-all duration-700 ease-out transform ${
+              showPills ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            }`}
+          >
+            <button 
+              onClick={() => scrollToSection(analyzerSectionRef)} 
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
+            >
+              Pitch us an idea
+            </button>
+            <button 
+              onClick={() => scrollToSection(analyzerSectionRef)}
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
+            >
+              Come work here
+            </button>
+            <button 
+              onClick={() => scrollToSection(analyzerSectionRef)}
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
+            >
+              Send a brief hello
+            </button>
+            <button 
+              onClick={() => scrollToSection(analyzerSectionRef)}
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
+            >
+              See how we operate
+            </button>
+            
+            {/* Outline pill button */}
+            <button 
+              onClick={copyEmailToClipboard}
+              className="inline-flex items-center justify-center text-white bg-transparent border border-white/40 hover:border-white rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap gap-2 sm:gap-3 cursor-pointer hover:bg-white hover:text-black transition-all duration-200 shadow-md backdrop-blur-sm"
+            >
+              <span className={`${copiedEmail ? 'no-underline' : 'underline decoration-1 underline-offset-2'}`}>
+                {copiedEmail ? 'Copied hello@mainframe.co' : 'Reach us: hello@mainframe.co'}
+              </span>
+              {copiedEmail ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ANALYZER CONSOLE SECTION (under the fold) ────────────────────── */}
+      <div 
+        ref={analyzerSectionRef}
+        id="analyzer-section" 
+        className="relative z-10 w-full min-h-screen bg-black/95 text-white/90 backdrop-blur-xl border-t border-white/10 px-5 sm:px-8 md:px-12 py-20 flex flex-col items-center"
+      >
+        <div className="max-w-4xl w-full">
+          
+          {/* Main Title */}
+          <div className="text-center mb-12">
+            <span className="text-[12px] uppercase tracking-[3px] text-white/50 font-bold border border-white/20 px-3 py-1 rounded-full bg-white/5">
+              Confidence-Calibrated Inference Cascade
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black mt-4 tracking-tight text-white uppercase">
+              Contract Risk Detector
+            </h2>
+            <p className="text-white/60 max-w-xl mx-auto mt-3 text-sm sm:text-[16px] leading-relaxed font-light">
+              Submit contract PDFs or paste clauses. LexGuard classifies risk levels utilizing Legal-BERT and details anomalies.
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md shadow-2xl">
+            <form onSubmit={handleAnalyze} className="space-y-6">
+              
+              {/* File upload zone */}
+              <div className="flex flex-col space-y-2">
+                <label className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
+                  Upload Contract File
+                </label>
+                <div className="relative group border-2 border-dashed border-white/15 hover:border-white/40 transition-colors duration-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer bg-white/[0.01]">
+                  <input
+                    type="file"
+                    accept=".pdf,.txt"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setFile(e.target.files[0]);
+                        setTextInput(''); // Clear pasted text if file uploaded
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <svg className="w-10 h-10 text-white/30 group-hover:text-white/60 transition-colors duration-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="text-sm font-medium text-white/80">
+                    {file ? file.name : 'Choose a file or drag it here'}
+                  </span>
+                  <span className="text-[11px] text-white/40 mt-1">
+                    Accepts PDF or TXT up to 10MB
+                  </span>
+                </div>
+              </div>
+
+              {/* OR divider */}
+              <div className="flex items-center justify-center gap-4 my-2 select-none">
+                <div className="h-[1px] bg-white/10 flex-1" />
+                <span className="text-[11px] font-bold tracking-widest text-white/40 uppercase">OR</span>
+                <div className="h-[1px] bg-white/10 flex-1" />
+              </div>
+
+              {/* Text Area */}
+              <div className="flex flex-col space-y-2">
+                <label htmlFor="pasted-text" className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
+                  Paste Contract Clauses
+                </label>
+                <textarea
+                  id="pasted-text"
+                  rows={6}
+                  placeholder="Paste specific terms or whole agreements here to analyze..."
+                  value={textInput}
+                  onChange={(e) => {
+                    setTextInput(e.target.value);
+                    setFile(null); // Clear file if text entered
+                  }}
+                  className="bg-white/[0.04] focus:bg-white/[0.07] border border-white/10 focus:border-white/30 rounded-xl p-4 text-sm text-white placeholder-white/20 outline-none transition-all duration-200 resize-y"
+                />
+              </div>
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center py-3.5 bg-white text-black font-black text-[15px] uppercase tracking-wider rounded-xl cursor-pointer hover:bg-white/90 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xl"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Running CCIC Pipeline...</span>
+                  </div>
+                ) : (
+                  <span>⚡ Analyze with LexGuard</span>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Loading status details */}
+          {isLoading && (
+            <div className="text-center mt-6 text-white/40 text-xs animate-pulse font-light">
+              Legal-BERT is computing token distributions and evaluating confidence cascade...
+            </div>
+          )}
+
+          {/* ── RESULTS DASHBOARD ────────────────────────────────────────── */}
+          {analysisResult && (
+            <div id="results-dashboard" className="mt-16 space-y-10 scroll-mt-24">
+              
+              {/* Summary details card */}
+              <div className="bg-white text-black rounded-2xl p-6 sm:p-8 border border-black/10 shadow-2xl transition-all">
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight border-b border-black/10 pb-4 mb-6">
+                  📊 Analysis Summary
+                </h3>
+
+                {/* Stat numbers */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-6 text-center">
+                  <div className="flex flex-col justify-center">
+                    <span className="text-3xl sm:text-5xl font-black tracking-tight">
+                      {analysisResult.summary.total_sentences}
+                    </span>
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                      Total Sentences
+                    </span>
+                  </div>
+                  <div className="h-10 w-[1px] bg-black/10 self-center justify-self-center" />
+                  <div className="flex flex-col justify-center">
+                    <span className="text-3xl sm:text-5xl font-black tracking-tight text-red-500">
+                      {analysisResult.summary.risky_count}
+                    </span>
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                      Risky Clauses
+                    </span>
+                  </div>
+                  <div className="h-10 w-[1px] bg-black/10 self-center justify-self-center" />
+                  <div className="flex flex-col justify-center">
+                    <span className="text-3xl sm:text-5xl font-black tracking-tight">
+                      {analysisResult.summary.risk_percentage}%
+                    </span>
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                      Risk Level
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-black/10 my-6" />
+
+                {/* Severity Pills */}
+                <div className="flex flex-wrap gap-2 items-center justify-center mb-6">
+                  <span className="text-[11px] font-bold text-black/40 uppercase tracking-wider mr-2">Severity:</span>
+                  <span className="inline-flex items-center text-xs font-black bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> High {analysisResult.summary.severity_distribution.High || 0}
+                  </span>
+                  <span className="inline-flex items-center text-xs font-black bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 rounded-full gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Medium {analysisResult.summary.severity_distribution.Medium || 0}
+                  </span>
+                  <span className="inline-flex items-center text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 rounded-full gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Low {analysisResult.summary.severity_distribution.Low || 0}
+                  </span>
+                </div>
+
+                {/* Doughnut Chart */}
+                {renderSvgDoughnut()}
+
+              </div>
+
+              {/* CCIC Config info board */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 sm:p-5 flex flex-wrap gap-4 items-center justify-between text-xs text-white/70">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-bold text-white uppercase tracking-wider">CCIC Configuration</span>
+                  <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px]">
+                    Mode: {analysisResult.ccic.mode}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px]">
+                    τ_t: {analysisResult.ccic.transformer_threshold}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px]">
+                    τ_m: {analysisResult.ccic.ml_threshold}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px]">
+                    T: {analysisResult.ccic.temperature}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-4 text-[11px] font-mono border-t border-white/5 sm:border-t-0 pt-2 sm:pt-0">
+                  <span className="title" title="Classified by transformer model">⚡ Trans: {analysisResult.ccic.detector_distribution.transformer || 0}</span>
+                  <span className="title" title="Classified by ML classifier">🤖 ML: {analysisResult.ccic.detector_distribution.ml || 0}</span>
+                  <span className="title" title="Classified by heuristic keywords">🔑 Key: {analysisResult.ccic.detector_distribution.keyword || 0}</span>
+                </div>
+              </div>
+
+              {/* Detected risks list */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                  <h4 className="text-lg font-black uppercase tracking-wider text-white">
+                    🔍 Detected Anomalies
+                  </h4>
+                  <span className="text-xs bg-white/10 px-3 py-1 rounded-full text-white/80 font-bold border border-white/5">
+                    {analysisResult.risks.length} Risk Clauses
+                  </span>
+                </div>
+
+                {analysisResult.risks.length === 0 ? (
+                  <div className="text-center py-16 bg-white/[0.02] border border-white/10 rounded-xl text-white/40">
+                    <svg className="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="font-bold">No risky clauses detected</p>
+                    <p className="text-xs mt-1 font-light">This contract appears to carry minimal standard risk variables.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {analysisResult.risks.map((risk, idx) => {
+                      const isExpanded = !!expandedClauses[idx];
+                      const explanation = explanations[idx];
+                      const isExplLoading = !!loadingExplanations[idx];
+
+                      let sevColor = '';
+                      let sevBg = '';
+                      let borderStyle = '';
+                      
+                      if (risk.severity === 'High') {
+                        sevColor = 'text-red-500 border-red-500/20';
+                        sevBg = 'bg-red-500';
+                        borderStyle = 'border-red-500/30 hover:border-red-500/50';
+                      } else if (risk.severity === 'Medium') {
+                        sevColor = 'text-amber-500 border-amber-500/20';
+                        sevBg = 'bg-amber-500';
+                        borderStyle = 'border-amber-500/30 hover:border-amber-500/50';
+                      } else {
+                        sevColor = 'text-emerald-500 border-emerald-500/20';
+                        sevBg = 'bg-emerald-500';
+                        borderStyle = 'border-emerald-500/20 hover:border-emerald-500/40';
+                      }
+
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => toggleExplanation(idx, risk, analysisResult.llm_available)}
+                          className={`relative overflow-hidden bg-white/[0.02] hover:bg-white/[0.04] border ${borderStyle} rounded-xl p-5 sm:p-6 transition-all duration-200 cursor-pointer shadow-lg`}
+                        >
+                          {/* Severity left colored strip */}
+                          <div className={`absolute top-0 left-0 bottom-0 w-1 ${sevBg}`} />
+
+                          {/* Card header */}
+                          <div className="flex justify-between items-center flex-wrap gap-2 mb-3">
+                            <span className="text-[12px] font-black uppercase tracking-wider text-white">
+                              {risk.risk_type} Risk
+                            </span>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded-full ${sevColor}`}>
+                              {risk.severity} Severity
+                            </span>
+                          </div>
+
+                          {/* Clause Text */}
+                          <p className="text-white/80 text-sm font-light italic leading-relaxed mb-4">
+                            "{risk.original_sentence}"
+                          </p>
+
+                          {/* Score bar */}
+                          {typeof risk.severity_score === 'number' && (
+                            <div className="flex items-center gap-3 mb-4 max-w-md">
+                              <div className="h-1.5 bg-white/5 rounded-full flex-1 overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-1000 ${sevBg}`}
+                                  style={{ width: `${Math.round(risk.severity_score * 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-mono text-white/50 shrink-0">
+                                score: {risk.severity_score.toFixed(3)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Meta tags line */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/40 border-t border-white/5 pt-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded font-mono text-[9px] ${
+                                risk.detector === 'transformer' 
+                                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
+                                  : risk.detector === 'ml'
+                                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              }`}>
+                                {risk.detector === 'transformer' ? '⚡ Transformer' : risk.detector === 'ml' ? '🤖 ML' : '🔑 Keyword'}
+                              </span>
+                              {typeof risk.confidence === 'number' && (
+                                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 font-mono text-[9px]">
+                                  conf: {risk.confidence.toFixed(4)}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-white hover:text-white/80 transition-colors flex items-center gap-1 font-bold">
+                              {isExpanded ? '▴ Hide' : '▾ Explain'}
+                            </span>
+                          </div>
+
+                          {/* Collapsible explanation drawer */}
+                          {isExpanded && (
+                            <div 
+                              className="mt-4 p-4 rounded-lg bg-white/[0.03] border border-white/10 text-xs sm:text-sm text-white/70 leading-relaxed space-y-1.5 animate-fadeIn"
+                              onClick={(e) => e.stopPropagation()} // Stop click bubbling up
+                            >
+                              <strong className="text-white font-black block uppercase tracking-wider text-[10px] text-white/60">
+                                AI Explanation
+                              </strong>
+                              {isExplLoading ? (
+                                <div className="flex items-center gap-2 text-white/50 py-1 font-light animate-pulse">
+                                  <svg className="animate-spin h-4 w-4 text-white/60" viewBox="0 0 24 24" fill="none">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  <span>Generating explanation clause...</span>
+                                </div>
+                              ) : (
+                                <p className="font-light">{explanation}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* ── FOOTER & CONTACT SECTION ───────────────────────────────────── */}
+      <footer 
+        ref={contactSectionRef}
+        id="contact" 
+        className="relative z-10 w-full bg-black text-white/50 py-20 px-5 sm:px-8 md:px-12 border-t border-white/10 text-center"
+      >
+        <div className="max-w-4xl mx-auto space-y-8">
+          
+          <div className="space-y-3">
+            <h3 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight">
+              Mainframe Systems
+            </h3>
+            <p className="max-w-md mx-auto text-xs sm:text-sm font-light leading-relaxed">
+              LexGuard is an academic preview engineered by Mainframe's Legal Informatics Lab. Verify critical clauses with official counsel before execution.
+            </p>
+          </div>
+
+          <div className="flex justify-center gap-8 text-xs uppercase tracking-wider font-bold">
+            <a 
+              href="https://huggingface.co/spaces/Hemanth021/legal-risk-detector" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-white hover:text-white/60 transition-colors"
+            >
+              HuggingFace Space
+            </a>
+            <span>·</span>
+            <a 
+              href="https://github.com/HEMANTH-A-7/Legal-Risk-Detector" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-white hover:text-white/60 transition-colors"
+            >
+              GitHub Project
+            </a>
+          </div>
+
+          <div className="h-[1px] bg-white/10 w-24 mx-auto" />
+
+          <p className="text-[10px] tracking-widest uppercase">
+            © {new Date().getFullYear()} Mainframe & LexGuard. All Rights Reserved.
+          </p>
+        </div>
+      </footer>
+
+    </div>
+  );
+};
+
+export default App;
