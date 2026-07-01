@@ -41,6 +41,16 @@ interface AnalysisResponse {
   traceback?: string;
 }
 
+interface GitHubProfile {
+  name: string;
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  bio: string;
+  public_repos: number;
+  followers: number;
+}
+
 export const App: React.FC = () => {
   // Input states
   const [file, setFile] = useState<File | null>(null);
@@ -49,7 +59,6 @@ export const App: React.FC = () => {
   // App UI states
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCTA, setShowCTA] = useState(false);
   
   // Explanation caching & states
@@ -57,9 +66,13 @@ export const App: React.FC = () => {
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [loadingExplanations, setLoadingExplanations] = useState<Record<number, boolean>>({});
 
-  // Refs for tracking mouse position & scrolling
-  const mouseXRef = useRef<number>(0);
+  // Dynamic GitHub user details
+  const [githubProfile, setGithubProfile] = useState<GitHubProfile | null>(null);
+
+  // Smooth LERP animation variables for scales
   const [tilt, setTilt] = useState(0);
+  const targetTiltRef = useRef<number>(0);
+  const currentTiltRef = useRef<number>(0);
 
   const analyzerSectionRef = useRef<HTMLDivElement>(null);
   const contactSectionRef = useRef<HTMLDivElement>(null);
@@ -76,31 +89,68 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Track mouse movements to tilt the scales
+  // Fetch GitHub profile details
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const currentX = e.clientX;
-      mouseXRef.current = currentX;
-      
-      const width = window.innerWidth;
-      const pct = currentX / width;
-      // Map percentage to a tilt between -18 and 18 degrees
-      const targetTilt = (pct - 0.5) * 36;
-      setTilt(targetTilt);
+    fetch('https://api.github.com/users/HEMANTH-A-7')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.login) {
+          setGithubProfile({
+            name: data.name || 'Hemanth Amarthi',
+            login: data.login,
+            avatar_url: data.avatar_url,
+            html_url: data.html_url,
+            bio: data.bio || 'AI / ML Developer & Researcher',
+            public_repos: data.public_repos,
+            followers: data.followers
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching github profile:', err));
+  }, []);
+
+  // requestAnimationFrame loop to LERP the tilt angle seamlessly
+  useEffect(() => {
+    let animId: number;
+    
+    const updateAnimation = () => {
+      const diff = targetTiltRef.current - currentTiltRef.current;
+      if (Math.abs(diff) > 0.001) {
+        currentTiltRef.current += diff * 0.085; // smooth easing multiplier
+        setTilt(currentTiltRef.current);
+      }
+      animId = requestAnimationFrame(updateAnimation);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    animId = requestAnimationFrame(updateAnimation);
+    return () => cancelAnimationFrame(animId);
   }, []);
+
+  // Scale SVG mouse movement handler (local coordinates distance from pivot)
+  const handleScaleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const relativeX = e.clientX - centerX;
+    
+    const halfWidth = rect.width / 2;
+    const ratio = relativeX / halfWidth; // -1 to +1
+    
+    // Proportional tilt (clamped between -22 and 22 degrees)
+    // Moving mouse to the right pulls the right pan down (clockwise / positive tilt)
+    targetTiltRef.current = ratio * 22;
+  };
+
+  const handleScaleMouseLeave = () => {
+    // Return to horizontal balance smoothly
+    targetTiltRef.current = 0;
+  };
 
   // Scroll utilities
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: 'smooth' });
     }
-    setMobileMenuOpen(false);
   };
 
   // Handle form submission
@@ -300,56 +350,20 @@ export const App: React.FC = () => {
           </span>
         </div>
 
-        {/* Desktop Nav Links (center) */}
-        <div className="hidden md:flex items-center text-[23px] text-black font-light leading-none">
-          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Labs</button>
-          <span className="mx-1 select-none font-normal">, </span>
-          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Studio</button>
-          <span className="mx-1 select-none font-normal">, </span>
-          <button onClick={() => scrollToSection(analyzerSectionRef)} className="hover:opacity-60 transition-opacity">Openings</button>
-          <span className="mx-1 select-none font-normal">, </span>
-          <button onClick={() => scrollToSection(contactSectionRef)} className="hover:opacity-60 transition-opacity">Shop</button>
-        </div>
-
         {/* Desktop CTA (right) */}
-        <div className="hidden md:block">
+        <div>
           <button 
             onClick={() => scrollToSection(contactSectionRef)} 
-            className="text-[23px] text-black underline underline-offset-4 hover:opacity-60 transition-opacity"
+            className="text-[23px] text-black underline underline-offset-4 hover:opacity-60 transition-opacity font-heading font-medium"
           >
             Get in touch
           </button>
         </div>
-
-        {/* Mobile Hamburger Button */}
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-[5px] focus:outline-none z-50 cursor-pointer"
-          aria-label="Toggle Menu"
-        >
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 transform origin-center ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 transform origin-center ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
-        </button>
       </nav>
-
-      {/* Mobile Menu Overlay */}
-      <div 
-        className={`fixed inset-0 bg-[#e5e5e5]/97 backdrop-blur-md z-40 flex flex-col justify-center px-8 gap-8 transition-all duration-300 md:hidden ${
-          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Labs</button>
-        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Studio</button>
-        <button onClick={() => scrollToSection(analyzerSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Openings</button>
-        <button onClick={() => scrollToSection(contactSectionRef)} className="text-[32px] font-medium text-left text-black hover:opacity-60 transition-opacity">Shop</button>
-        <div className="h-[1px] bg-black/10 my-2" />
-        <button onClick={() => scrollToSection(contactSectionRef)} className="text-[32px] font-medium text-left text-black underline underline-offset-4 hover:opacity-60 transition-opacity">Get in touch</button>
-      </div>
 
       {/* ── HERO SECTION (z-index: 1) ────────────────────────────────────── */}
       <section 
-        className="relative h-screen w-full flex flex-col md:flex-row items-center justify-between px-5 sm:px-8 md:px-12 pt-24 overflow-hidden z-10 select-none"
+        className="relative h-screen w-full flex flex-col md:flex-row items-center justify-between px-5 sm:px-8 md:px-12 pt-24 overflow-hidden z-10 select-none animate-fadeIn"
         style={{ background: 'radial-gradient(circle at 80% 40%, #f3f3f3 0%, #e2e2e2 100%)' }}
       >
         
@@ -396,7 +410,13 @@ export const App: React.FC = () => {
 
         {/* Right Side: Reactive, Animated Scales of Justice */}
         <div className="flex-1 w-full max-w-[320px] sm:max-w-[420px] md:max-w-[480px] h-full flex items-center justify-center z-10 py-6 md:py-0">
-          <svg viewBox="0 0 300 300" className="w-full h-auto text-black drop-shadow-2xl">
+          <svg 
+            ref={useRef(null)}
+            onMouseMove={handleScaleMouseMove}
+            onMouseLeave={handleScaleMouseLeave}
+            viewBox="0 0 300 300" 
+            className="w-full h-auto text-black drop-shadow-2xl cursor-crosshair select-none"
+          >
             {/* Stand Base */}
             <path d="M70 270 L230 270" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
             <path d="M110 270 L110 260 L190 260 L190 270 Z" fill="currentColor" />
@@ -408,11 +428,10 @@ export const App: React.FC = () => {
             <circle cx="150" cy="78" r="8" fill="currentColor" />
             <path d="M150 78 L150 63" stroke="currentColor" strokeWidth="3" />
             
-            {/* Horizontal Tilting Balance Beam */}
+            {/* Horizontal Tilting Balance Beam + Pans (Nested for correct translation) */}
             <g style={{
               transform: `rotate(${tilt}deg)`,
-              transformOrigin: '150px 78px',
-              transition: 'transform 0.1s ease-out'
+              transformOrigin: '150px 78px'
             }}>
               {/* Beam line */}
               <path d="M50 78 L250 78" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
@@ -423,34 +442,32 @@ export const App: React.FC = () => {
               
               {/* Centre pointer */}
               <path d="M150 78 L150 94" stroke="currentColor" strokeWidth="3.5" />
-            </g>
-            
-            {/* Left Balance Pan (connects at 50, 78) */}
-            <g style={{
-              transform: `translate(${100 * (1 - Math.cos(tilt * Math.PI / 180))}px, ${-100 * Math.sin(tilt * Math.PI / 180)}px) rotate(${-tilt}deg)`,
-              transformOrigin: '50px 78px',
-              transition: 'transform 0.1s ease-out'
-            }}>
-              {/* Suspension Chains */}
-              <path d="M50 78 L25 180 M50 78 L75 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
-              {/* Scale Pan Plate */}
-              <path d="M20 180 L80 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              {/* Subtle fill */}
-              <path d="M20 180 Q50 202 80 180" fill="currentColor" opacity="0.12" />
-            </g>
-            
-            {/* Right Balance Pan (connects at 250, 78) */}
-            <g style={{
-              transform: `translate(${-100 * (1 - Math.cos(tilt * Math.PI / 180))}px, ${100 * Math.sin(tilt * Math.PI / 180)}px) rotate(${-tilt}deg)`,
-              transformOrigin: '250px 78px',
-              transition: 'transform 0.1s ease-out'
-            }}>
-              {/* Suspension Chains */}
-              <path d="M250 78 L225 180 M250 78 L275 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
-              {/* Scale Pan Plate */}
-              <path d="M220 180 L280 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              {/* Subtle fill */}
-              <path d="M220 180 Q250 202 280 180" fill="currentColor" opacity="0.12" />
+
+              {/* Left Balance Pan (Nested inside parent group, counter-rotated around pivot point 50,78) */}
+              <g style={{
+                transform: `rotate(${-tilt}deg)`,
+                transformOrigin: '50px 78px'
+              }}>
+                {/* Suspension Chains */}
+                <path d="M50 78 L25 180 M50 78 L75 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
+                {/* Scale Pan Plate */}
+                <path d="M20 180 L80 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                {/* Subtle fill */}
+                <path d="M20 180 Q50 202 80 180" fill="currentColor" opacity="0.12" />
+              </g>
+              
+              {/* Right Balance Pan (Nested inside parent group, counter-rotated around pivot point 250,78) */}
+              <g style={{
+                transform: `rotate(${-tilt}deg)`,
+                transformOrigin: '250px 78px'
+              }}>
+                {/* Suspension Chains */}
+                <path d="M250 78 L225 180 M250 78 L275 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
+                {/* Scale Pan Plate */}
+                <path d="M220 180 L280 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                {/* Subtle fill */}
+                <path d="M220 180 Q250 202 280 180" fill="currentColor" opacity="0.12" />
+              </g>
             </g>
           </svg>
         </div>
@@ -484,7 +501,7 @@ export const App: React.FC = () => {
               
               {/* File upload zone */}
               <div className="flex flex-col space-y-2">
-                <label className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
+                <label className="text-[11px] font-bold text-white/60 uppercase tracking-widest font-heading">
                   Upload Contract File
                 </label>
                 <div className="relative group border-2 border-dashed border-white/15 hover:border-white/40 transition-colors duration-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer bg-white/[0.01]">
@@ -520,7 +537,7 @@ export const App: React.FC = () => {
 
               {/* Text Area */}
               <div className="flex flex-col space-y-2">
-                <label htmlFor="pasted-text" className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
+                <label htmlFor="pasted-text" className="text-[11px] font-bold text-white/60 uppercase tracking-widest font-heading">
                   Paste Contract Clauses
                 </label>
                 <textarea
@@ -559,7 +576,7 @@ export const App: React.FC = () => {
 
           {/* Loading status details */}
           {isLoading && (
-            <div className="text-center mt-6 text-white/40 text-xs animate-pulse font-light">
+            <div className="text-center mt-6 text-white/40 text-xs animate-pulse font-light font-body">
               Legal-BERT is computing token distributions and evaluating confidence cascade...
             </div>
           )}
@@ -570,7 +587,7 @@ export const App: React.FC = () => {
               
               {/* Summary details card */}
               <div className="bg-white text-black rounded-2xl p-6 sm:p-8 border border-black/10 shadow-2xl transition-all">
-                <h3 className="text-xl sm:text-2xl font-black tracking-tight border-b border-black/10 pb-4 mb-6">
+                <h3 className="text-xl sm:text-2xl font-black tracking-tight border-b border-black/10 pb-4 mb-6 font-heading">
                   📊 Analysis Summary
                 </h3>
 
@@ -580,7 +597,7 @@ export const App: React.FC = () => {
                     <span className="text-3xl sm:text-5xl font-black tracking-tight">
                       {analysisResult.summary.total_sentences}
                     </span>
-                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1 font-heading">
                       Total Sentences
                     </span>
                   </div>
@@ -589,7 +606,7 @@ export const App: React.FC = () => {
                     <span className="text-3xl sm:text-5xl font-black tracking-tight text-red-500">
                       {analysisResult.summary.risky_count}
                     </span>
-                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1 font-heading">
                       Risky Clauses
                     </span>
                   </div>
@@ -598,7 +615,7 @@ export const App: React.FC = () => {
                     <span className="text-3xl sm:text-5xl font-black tracking-tight">
                       {analysisResult.summary.risk_percentage}%
                     </span>
-                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1">
+                    <span className="text-[10px] font-bold text-black/40 uppercase tracking-wider mt-1 font-heading">
                       Risk Level
                     </span>
                   </div>
@@ -608,14 +625,14 @@ export const App: React.FC = () => {
 
                 {/* Severity Pills */}
                 <div className="flex flex-wrap gap-2 items-center justify-center mb-6">
-                  <span className="text-[11px] font-bold text-black/40 uppercase tracking-wider mr-2">Severity:</span>
-                  <span className="inline-flex items-center text-xs font-black bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full gap-1.5">
+                  <span className="text-[11px] font-bold text-black/40 uppercase tracking-wider mr-2 font-heading">Severity:</span>
+                  <span className="inline-flex items-center text-xs font-black bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full gap-1.5 font-heading">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> High {analysisResult.summary.severity_distribution.High || 0}
                   </span>
-                  <span className="inline-flex items-center text-xs font-black bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 rounded-full gap-1.5">
+                  <span className="inline-flex items-center text-xs font-black bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 rounded-full gap-1.5 font-heading">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Medium {analysisResult.summary.severity_distribution.Medium || 0}
                   </span>
-                  <span className="inline-flex items-center text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 rounded-full gap-1.5">
+                  <span className="inline-flex items-center text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 rounded-full gap-1.5 font-heading">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Low {analysisResult.summary.severity_distribution.Low || 0}
                   </span>
                 </div>
@@ -628,7 +645,7 @@ export const App: React.FC = () => {
               {/* CCIC Config info board */}
               <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 sm:p-5 flex flex-wrap gap-4 items-center justify-between text-xs text-white/70">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-bold text-white uppercase tracking-wider">CCIC Configuration</span>
+                  <span className="font-bold text-white uppercase tracking-wider font-heading">CCIC Configuration</span>
                   <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px]">
                     Mode: {analysisResult.ccic.mode}
                   </span>
@@ -653,10 +670,10 @@ export const App: React.FC = () => {
               {/* Detected risks list */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b border-white/10">
-                  <h4 className="text-lg font-black uppercase tracking-wider text-white">
+                  <h4 className="text-lg font-black uppercase tracking-wider text-white font-heading">
                     🔍 Detected Anomalies
                   </h4>
-                  <span className="text-xs bg-white/10 px-3 py-1 rounded-full text-white/80 font-bold border border-white/5">
+                  <span className="text-xs bg-white/10 px-3 py-1 rounded-full text-white/80 font-bold border border-white/5 font-heading">
                     {analysisResult.risks.length} Risk Clauses
                   </span>
                 </div>
@@ -705,16 +722,16 @@ export const App: React.FC = () => {
 
                           {/* Card header */}
                           <div className="flex justify-between items-center flex-wrap gap-2 mb-3">
-                            <span className="text-[12px] font-black uppercase tracking-wider text-white">
+                            <span className="text-[12px] font-black uppercase tracking-wider text-white font-heading">
                               {risk.risk_type} Risk
                             </span>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded-full ${sevColor}`}>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded-full font-heading ${sevColor}`}>
                               {risk.severity} Severity
                             </span>
                           </div>
 
                           {/* Clause Text */}
-                          <p className="text-white/80 text-sm font-light italic leading-relaxed mb-4">
+                          <p className="text-white/80 text-sm font-light italic leading-relaxed mb-4 font-body">
                             "{risk.original_sentence}"
                           </p>
 
@@ -762,11 +779,11 @@ export const App: React.FC = () => {
                               className="mt-4 p-4 rounded-lg bg-white/[0.03] border border-white/10 text-xs sm:text-sm text-white/70 leading-relaxed space-y-1.5 animate-fadeIn"
                               onClick={(e) => e.stopPropagation()} // Stop click bubbling up
                             >
-                              <strong className="text-white font-black block uppercase tracking-wider text-[10px] text-white/60">
+                              <strong className="text-white font-black block uppercase tracking-wider text-[10px] text-white/60 font-heading">
                                 AI Explanation
                               </strong>
                               {isExplLoading ? (
-                                <div className="flex items-center gap-2 text-white/50 py-1 font-light animate-pulse">
+                                <div className="flex items-center gap-2 text-white/50 py-1 font-light animate-pulse font-body">
                                   <svg className="animate-spin h-4 w-4 text-white/60" viewBox="0 0 24 24" fill="none">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -774,7 +791,7 @@ export const App: React.FC = () => {
                                   <span>Generating explanation clause...</span>
                                 </div>
                               ) : (
-                                <p className="font-light">{explanation}</p>
+                                <p className="font-light font-body">{explanation}</p>
                               )}
                             </div>
                           )}
@@ -795,7 +812,7 @@ export const App: React.FC = () => {
       <footer 
         ref={contactSectionRef}
         id="contact" 
-        className="relative z-10 w-full bg-black text-white/50 py-20 px-5 sm:px-8 md:px-12 border-t border-white/10 text-center"
+        className="relative z-10 w-full bg-black text-white/50 py-16 px-5 sm:px-8 md:px-12 border-t border-white/10 text-center"
       >
         <div className="max-w-4xl mx-auto space-y-8">
           
@@ -803,10 +820,54 @@ export const App: React.FC = () => {
             <h3 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight font-heading">
               LexGuard Systems
             </h3>
-            <p className="max-w-md mx-auto text-xs sm:text-sm font-light leading-relaxed">
+            <p className="max-w-md mx-auto text-xs sm:text-sm font-light leading-relaxed font-body">
               LexGuard is an academic preview engineered by LexGuard Legal Informatics Lab. Verify critical clauses with official counsel before execution.
             </p>
           </div>
+
+          {/* User Profile Details Fetched dynamically from GitHub */}
+          {githubProfile && (
+            <div className="max-w-sm mx-auto bg-white/[0.03] border border-white/10 rounded-xl p-4 flex items-center gap-4 text-left shadow-lg backdrop-blur-sm animate-fadeIn">
+              <a 
+                href={githubProfile.html_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="shrink-0 rounded-full overflow-hidden border border-white/20 hover:border-white/60 transition-colors"
+              >
+                <img 
+                  src={githubProfile.avatar_url} 
+                  alt={githubProfile.name}
+                  className="w-12 h-12 object-cover"
+                />
+              </a>
+              <div className="flex-1 min-w-0">
+                <a 
+                  href={githubProfile.html_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:underline font-bold text-sm truncate block font-heading"
+                >
+                  {githubProfile.name}
+                </a>
+                <span className="text-[11px] text-white/50 block font-mono">
+                  @{githubProfile.login}
+                </span>
+                <p className="text-[11px] text-white/70 mt-1 line-clamp-2 leading-snug font-body font-light">
+                  {githubProfile.bio}
+                </p>
+              </div>
+              <div className="shrink-0 text-right border-l border-white/10 pl-3">
+                <div className="text-[11px] font-mono">
+                  <span className="text-white font-bold">{githubProfile.public_repos}</span>
+                  <span className="text-white/40 block text-[9px] uppercase tracking-wider">Repos</span>
+                </div>
+                <div className="text-[11px] font-mono mt-1">
+                  <span className="text-white font-bold">{githubProfile.followers}</span>
+                  <span className="text-white/40 block text-[9px] uppercase tracking-wider">Followers</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-center gap-8 text-xs uppercase tracking-wider font-bold">
             <a 
