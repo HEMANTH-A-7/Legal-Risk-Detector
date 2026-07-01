@@ -73,6 +73,7 @@ export const App: React.FC = () => {
   const [tilt, setTilt] = useState(0);
   const targetTiltRef = useRef<number>(0);
   const currentTiltRef = useRef<number>(0);
+  const isHoveredRef = useRef<boolean>(false);
 
   const analyzerSectionRef = useRef<HTMLDivElement>(null);
   const contactSectionRef = useRef<HTMLDivElement>(null);
@@ -114,11 +115,16 @@ export const App: React.FC = () => {
     let animId: number;
     
     const updateAnimation = () => {
-      const diff = targetTiltRef.current - currentTiltRef.current;
-      if (Math.abs(diff) > 0.001) {
-        currentTiltRef.current += diff * 0.085; // smooth easing multiplier
-        setTilt(currentTiltRef.current);
+      // If not hovered, oscillate slowly using a sine wave
+      if (!isHoveredRef.current) {
+        const time = Date.now() * 0.0015;
+        targetTiltRef.current = Math.sin(time * 1.8) * 3.5; // slow, gentle sway
       }
+
+      const diff = targetTiltRef.current - currentTiltRef.current;
+      currentTiltRef.current += diff * 0.085; // smooth easing multiplier
+      setTilt(currentTiltRef.current);
+      
       animId = requestAnimationFrame(updateAnimation);
     };
 
@@ -128,6 +134,7 @@ export const App: React.FC = () => {
 
   // Scale SVG mouse movement handler (local coordinates distance from pivot)
   const handleScaleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    isHoveredRef.current = true;
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -142,8 +149,7 @@ export const App: React.FC = () => {
   };
 
   const handleScaleMouseLeave = () => {
-    // Return to horizontal balance smoothly
-    targetTiltRef.current = 0;
+    isHoveredRef.current = false;
   };
 
   // Scroll utilities
@@ -411,7 +417,6 @@ export const App: React.FC = () => {
         {/* Right Side: Reactive, Animated Scales of Justice */}
         <div className="flex-1 w-full max-w-[320px] sm:max-w-[420px] md:max-w-[480px] h-full flex items-center justify-center z-10 py-6 md:py-0">
           <svg 
-            ref={useRef(null)}
             onMouseMove={handleScaleMouseMove}
             onMouseLeave={handleScaleMouseLeave}
             viewBox="0 0 300 300" 
@@ -490,7 +495,7 @@ export const App: React.FC = () => {
             <h2 className="text-3xl sm:text-5xl font-black mt-4 tracking-tight text-white uppercase font-heading">
               Contract Risk Detector
             </h2>
-            <p className="text-white/60 max-w-xl mx-auto mt-3 text-sm sm:text-[16px] leading-relaxed font-light">
+            <p className="text-white/60 max-w-xl mx-auto mt-3 text-sm sm:text-[16px] leading-relaxed font-light font-body">
               Submit contract PDFs or paste clauses. LexGuard classifies risk levels utilizing Legal-BERT and details anomalies.
             </p>
           </div>
@@ -808,7 +813,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ── FOOTER & CONTACT SECTION ───────────────────────────────────── */}
+      {/* ── FOOTER & CONTACT SECTION (Get in Touch) ────────────────────── */}
       <footer 
         ref={contactSectionRef}
         id="contact" 
@@ -868,6 +873,55 @@ export const App: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Contact Details Grid / List */}
+          <div className="flex flex-col space-y-4">
+            <h4 className="text-[11px] font-bold text-white/60 uppercase tracking-widest font-heading">
+              Get in Touch
+            </h4>
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs sm:text-sm font-body">
+              <a 
+                href="mailto:hemanthkumar.amarthi7@gmail.com" 
+                className="text-white hover:text-white/70 transition-colors flex items-center gap-2.5 font-light"
+              >
+                <svg className="w-4 h-4 shrink-0 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>hemanthkumar.amarthi7@gmail.com</span>
+              </a>
+              <a 
+                href="tel:8919684910" 
+                className="text-white hover:text-white/70 transition-colors flex items-center gap-2.5 font-light"
+              >
+                <svg className="w-4 h-4 shrink-0 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span>+91 8919684910</span>
+              </a>
+              <a 
+                href="https://www.linkedin.com/in/hemanth-kumar-amarthi/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white hover:text-white/70 transition-colors flex items-center gap-2.5 font-light"
+              >
+                <svg className="w-4 h-4 shrink-0 text-white/60" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+                <span>LinkedIn</span>
+              </a>
+              <a 
+                href="https://hemanth-portfolio-omega-gray.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white hover:text-white/70 transition-colors flex items-center gap-2.5 font-light"
+              >
+                <svg className="w-4 h-4 shrink-0 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                <span>Portfolio</span>
+              </a>
+            </div>
+          </div>
 
           <div className="flex justify-center gap-8 text-xs uppercase tracking-wider font-bold">
             <a 
