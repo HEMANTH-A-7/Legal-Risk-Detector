@@ -50,61 +50,43 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showPills, setShowPills] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [showCTA, setShowCTA] = useState(false);
   
   // Explanation caching & states
   const [expandedClauses, setExpandedClauses] = useState<Record<number, boolean>>({});
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [loadingExplanations, setLoadingExplanations] = useState<Record<number, boolean>>({});
 
-  // Refs for video scrub & scrolling
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const prevXRef = useRef<number | null>(null);
-  const targetTimeRef = useRef<number>(0);
-  const isSeekingRef = useRef<boolean>(false);
+  // Refs for tracking mouse position & scrolling
+  const mouseXRef = useRef<number>(0);
+  const [tilt, setTilt] = useState(0);
+
   const analyzerSectionRef = useRef<HTMLDivElement>(null);
   const contactSectionRef = useRef<HTMLDivElement>(null);
 
-  // Typewriter hook
-  const typewriterText = "Glad you stopped in. Good taste tends to find us. Now, what are we building?";
-  const { displayed: typedText, done: typewriterDone } = useTypewriter(typewriterText, 38, 600);
+  // Typewriter hook with legal-focused text
+  const typewriterText = "Analyze contracts for hidden liabilities, risk variables, and compliance anomalies instantly using confidence-calibrated Legal-BERT.";
+  const { displayed: typedText, done: typewriterDone } = useTypewriter(typewriterText, 25, 400);
 
-  // 400ms delay for action pills independent of typewriter completion
+  // 400ms delay for action CTA button
   useEffect(() => {
     const timer = setTimeout(() => {
-      setShowPills(true);
+      setShowCTA(true);
     }, 400);
     return () => clearTimeout(timer);
   }, []);
 
-  // Video scrub event listener
+  // Track mouse movements to tilt the scales
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const video = videoRef.current;
-      if (!video || isNaN(video.duration) || video.duration === 0) return;
-
       const currentX = e.clientX;
-      if (prevXRef.current === null) {
-        prevXRef.current = currentX;
-        return;
-      }
-
-      const delta = currentX - prevXRef.current;
-      prevXRef.current = currentX;
-
-      const SENSITIVITY = 0.8;
-      const deltaRatio = delta / window.innerWidth;
+      mouseXRef.current = currentX;
       
-      let newTime = targetTimeRef.current + (deltaRatio * SENSITIVITY * video.duration);
-      // Clamp between 0 and video duration
-      newTime = Math.max(0, Math.min(newTime, video.duration));
-      targetTimeRef.current = newTime;
-
-      if (!isSeekingRef.current) {
-        isSeekingRef.current = true;
-        video.currentTime = newTime;
-      }
+      const width = window.innerWidth;
+      const pct = currentX / width;
+      // Map percentage to a tilt between -18 and 18 degrees
+      const targetTilt = (pct - 0.5) * 36;
+      setTilt(targetTilt);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -113,32 +95,12 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const handleSeeked = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.05) {
-      // Target time moved during seek, continue seeking
-      video.currentTime = targetTimeRef.current;
-    } else {
-      isSeekingRef.current = false;
-    }
-  };
-
   // Scroll utilities
   const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: 'smooth' });
     }
     setMobileMenuOpen(false);
-  };
-
-  // Email copy utility
-  const copyEmailToClipboard = () => {
-    navigator.clipboard.writeText('hello@mainframe.co').then(() => {
-      setCopiedEmail(true);
-      setTimeout(() => setCopiedEmail(false), 2000);
-    });
   };
 
   // Handle form submission
@@ -200,7 +162,6 @@ export const App: React.FC = () => {
     // If we're opening and don't have explanation yet
     if (!isExpanded && !explanations[idx]) {
       if (!llmAvailable) {
-        // Fallback description is already stored in the risk object, or template logic handles it
         setExplanations(prev => ({ 
           ...prev, 
           [idx]: risk.explanation || 'Template-based analysis suggests reviewing liability liability limits.' 
@@ -321,26 +282,10 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen selection:bg-black/10 text-black">
+    <div className="relative min-h-screen selection:bg-black/10 text-black bg-[#e5e5e5]">
       
-      {/* ── BACKGROUND VIDEO (mouse-scrub controlled) ────────────────────── */}
-      <video
-        ref={videoRef}
-        onSeeked={handleSeeked}
-        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
-        style={{ objectPosition: '70% center' }}
-        muted
-        playsInline
-        preload="auto"
-      >
-        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4" type="video/mp4" />
-      </video>
-
-      {/* Subtle overlay to ensure general contrast across various portions of the video */}
-      <div className="fixed inset-0 bg-white/5 z-[1] pointer-events-none" />
-
       {/* ── NAVBAR (fixed, z-index: 10) ──────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-5 sm:px-8 py-4 sm:py-5 border-b border-black/5 backdrop-blur-md bg-white/20">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-5 sm:px-8 py-4 sm:py-5 border-b border-black/5 backdrop-blur-md bg-[#e5e5e5]/50">
         
         {/* Logo (left) */}
         <div 
@@ -390,7 +335,7 @@ export const App: React.FC = () => {
 
       {/* Mobile Menu Overlay */}
       <div 
-        className={`fixed inset-0 bg-white/97 backdrop-blur-md z-40 flex flex-col justify-center px-8 gap-8 transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 bg-[#e5e5e5]/97 backdrop-blur-md z-40 flex flex-col justify-center px-8 gap-8 transition-all duration-300 md:hidden ${
           mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
@@ -403,23 +348,29 @@ export const App: React.FC = () => {
       </div>
 
       {/* ── HERO SECTION (z-index: 1) ────────────────────────────────────── */}
-      <section className="relative h-screen w-full flex flex-col justify-end pb-12 md:justify-center md:pb-0 px-5 sm:px-8 md:px-10 overflow-hidden z-10 select-none">
-        <div className="max-w-xl relative z-10">
-          
-          {/* Blurred intro label */}
-          <div 
-            className="pointer-events-none select-none mb-5 sm:mb-6 leading-[1.3] text-black filter blur-[1px] tracking-tight"
-            style={{ fontSize: 'clamp(18px, 4vw, 26px)' }}
-          >
-            Hey there, meet A.R.I.A,
-            <br />
-            Mainframe's Adaptive Response Interface Agent
+      <section 
+        className="relative h-screen w-full flex flex-col md:flex-row items-center justify-between px-5 sm:px-8 md:px-12 pt-24 overflow-hidden z-10 select-none"
+        style={{ background: 'radial-gradient(circle at 80% 40%, #f3f3f3 0%, #e2e2e2 100%)' }}
+      >
+        
+        {/* Left Side: Brand & Call to Actions */}
+        <div className="max-w-xl flex flex-col justify-center h-full flex-1 z-10 pr-0 md:pr-6">
+          {/* Section Indicator */}
+          <div className="text-[12px] uppercase tracking-[3px] text-black/55 font-bold mb-4 font-heading">
+            Legal Risk Diagnostics
           </div>
+
+          {/* Heading */}
+          <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-none uppercase mb-6 font-heading">
+            Automated Legal
+            <br />
+            Contract Assurance
+          </h1>
 
           {/* Typewriter text */}
           <div 
-            className="text-black mb-5 sm:mb-6 font-light leading-[1.35] min-height-[54px] tracking-tight font-body"
-            style={{ fontSize: 'clamp(18px, 4vw, 26px)' }}
+            className="text-black/85 mb-8 font-light leading-[1.35] min-h-[72px] tracking-tight font-body"
+            style={{ fontSize: 'clamp(17px, 3.5vw, 22px)' }}
           >
             {typedText}
             {!typewriterDone && (
@@ -427,58 +378,83 @@ export const App: React.FC = () => {
             )}
           </div>
 
-          {/* Action pills (Fade-in & Slide-up 400ms after load) */}
+          {/* Action CTA Button redirecting to analyzer */}
           <div 
-            className={`flex flex-wrap gap-y-1 transition-all duration-700 ease-out transform ${
-              showPills ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            className={`transition-all duration-700 ease-out transform ${
+              showCTA ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}
           >
             <button 
-              onClick={() => scrollToSection(analyzerSectionRef)} 
-              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
-            >
-              Pitch us an idea
-            </button>
-            <button 
               onClick={() => scrollToSection(analyzerSectionRef)}
-              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
+              className="inline-flex items-center justify-center bg-black text-white border border-black/10 rounded-full text-[14px] sm:text-[16px] px-7 py-3.5 cursor-pointer hover:bg-white hover:text-black hover:scale-105 active:scale-95 transition-all duration-200 shadow-xl font-bold gap-2.5"
             >
-              Come work here
-            </button>
-            <button 
-              onClick={() => scrollToSection(analyzerSectionRef)}
-              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
-            >
-              Send a brief hello
-            </button>
-            <button 
-              onClick={() => scrollToSection(analyzerSectionRef)}
-              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap cursor-pointer hover:bg-black hover:text-white transition-all duration-200"
-            >
-              See how we operate
-            </button>
-            
-            {/* Outline pill button */}
-            <button 
-              onClick={copyEmailToClipboard}
-              className="inline-flex items-center justify-center text-white bg-transparent border border-white/40 hover:border-white rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap gap-2 sm:gap-3 cursor-pointer hover:bg-white hover:text-black transition-all duration-200 shadow-md backdrop-blur-sm"
-            >
-              <span className={`${copiedEmail ? 'no-underline' : 'underline decoration-1 underline-offset-2'}`}>
-                {copiedEmail ? 'Copied hello@mainframe.co' : 'Reach us: hello@mainframe.co'}
-              </span>
-              {copiedEmail ? (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              )}
+              <span>Analyze Document</span>
+              <span className="text-[18px] leading-none">✳︎</span>
             </button>
           </div>
         </div>
+
+        {/* Right Side: Reactive, Animated Scales of Justice */}
+        <div className="flex-1 w-full max-w-[320px] sm:max-w-[420px] md:max-w-[480px] h-full flex items-center justify-center z-10 py-6 md:py-0">
+          <svg viewBox="0 0 300 300" className="w-full h-auto text-black drop-shadow-2xl">
+            {/* Stand Base */}
+            <path d="M70 270 L230 270" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+            <path d="M110 270 L110 260 L190 260 L190 270 Z" fill="currentColor" />
+            
+            {/* Vertical Stand Post */}
+            <path d="M150 260 L150 78" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+            
+            {/* Stand Pivot Point Circle */}
+            <circle cx="150" cy="78" r="8" fill="currentColor" />
+            <path d="M150 78 L150 63" stroke="currentColor" strokeWidth="3" />
+            
+            {/* Horizontal Tilting Balance Beam */}
+            <g style={{
+              transform: `rotate(${tilt}deg)`,
+              transformOrigin: '150px 78px',
+              transition: 'transform 0.1s ease-out'
+            }}>
+              {/* Beam line */}
+              <path d="M50 78 L250 78" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+              
+              {/* Pivot markers */}
+              <circle cx="50" cy="78" r="4.5" fill="currentColor" />
+              <circle cx="250" cy="78" r="4.5" fill="currentColor" />
+              
+              {/* Centre pointer */}
+              <path d="M150 78 L150 94" stroke="currentColor" strokeWidth="3.5" />
+            </g>
+            
+            {/* Left Balance Pan (connects at 50, 78) */}
+            <g style={{
+              transform: `translate(${100 * (1 - Math.cos(tilt * Math.PI / 180))}px, ${-100 * Math.sin(tilt * Math.PI / 180)}px) rotate(${-tilt}deg)`,
+              transformOrigin: '50px 78px',
+              transition: 'transform 0.1s ease-out'
+            }}>
+              {/* Suspension Chains */}
+              <path d="M50 78 L25 180 M50 78 L75 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
+              {/* Scale Pan Plate */}
+              <path d="M20 180 L80 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              {/* Subtle fill */}
+              <path d="M20 180 Q50 202 80 180" fill="currentColor" opacity="0.12" />
+            </g>
+            
+            {/* Right Balance Pan (connects at 250, 78) */}
+            <g style={{
+              transform: `translate(${-100 * (1 - Math.cos(tilt * Math.PI / 180))}px, ${100 * Math.sin(tilt * Math.PI / 180)}px) rotate(${-tilt}deg)`,
+              transformOrigin: '250px 78px',
+              transition: 'transform 0.1s ease-out'
+            }}>
+              {/* Suspension Chains */}
+              <path d="M250 78 L225 180 M250 78 L275 180" stroke="currentColor" strokeWidth="1.5" opacity="0.65" />
+              {/* Scale Pan Plate */}
+              <path d="M220 180 L280 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              {/* Subtle fill */}
+              <path d="M220 180 Q250 202 280 180" fill="currentColor" opacity="0.12" />
+            </g>
+          </svg>
+        </div>
+
       </section>
 
       {/* ── ANALYZER CONSOLE SECTION (under the fold) ────────────────────── */}
@@ -491,10 +467,10 @@ export const App: React.FC = () => {
           
           {/* Main Title */}
           <div className="text-center mb-12">
-            <span className="text-[12px] uppercase tracking-[3px] text-white/50 font-bold border border-white/20 px-3 py-1 rounded-full bg-white/5">
+            <span className="text-[12px] uppercase tracking-[3px] text-white/50 font-bold border border-white/20 px-3 py-1 rounded-full bg-white/5 font-heading">
               Confidence-Calibrated Inference Cascade
             </span>
-            <h2 className="text-3xl sm:text-5xl font-black mt-4 tracking-tight text-white uppercase">
+            <h2 className="text-3xl sm:text-5xl font-black mt-4 tracking-tight text-white uppercase font-heading">
               Contract Risk Detector
             </h2>
             <p className="text-white/60 max-w-xl mx-auto mt-3 text-sm sm:text-[16px] leading-relaxed font-light">
@@ -824,11 +800,11 @@ export const App: React.FC = () => {
         <div className="max-w-4xl mx-auto space-y-8">
           
           <div className="space-y-3">
-            <h3 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight">
-              Mainframe Systems
+            <h3 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight font-heading">
+              LexGuard Systems
             </h3>
             <p className="max-w-md mx-auto text-xs sm:text-sm font-light leading-relaxed">
-              LexGuard is an academic preview engineered by Mainframe's Legal Informatics Lab. Verify critical clauses with official counsel before execution.
+              LexGuard is an academic preview engineered by LexGuard Legal Informatics Lab. Verify critical clauses with official counsel before execution.
             </p>
           </div>
 
@@ -855,7 +831,7 @@ export const App: React.FC = () => {
           <div className="h-[1px] bg-white/10 w-24 mx-auto" />
 
           <p className="text-[10px] tracking-widest uppercase">
-            © {new Date().getFullYear()} Mainframe & LexGuard. All Rights Reserved.
+            © {new Date().getFullYear()} LexGuard. All Rights Reserved.
           </p>
         </div>
       </footer>
