@@ -1,8 +1,8 @@
 <div align="center">
 
-# LexGuard — Legal Contract Risk Detector
+# LexGuard - Legal Contract Risk Detector
 
-### AI-powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade
+### AI powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade
 
 <br/>
 
