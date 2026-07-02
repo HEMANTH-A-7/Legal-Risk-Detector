@@ -1,37 +1,46 @@
----
-title: LexGuard Legal Risk Detector
-emoji: ⚖️
-colorFrom: indigo
-colorTo: purple
-sdk: docker
-pinned: false
-license: mit
----
-
 <div align="center">
 
-# ⚖️ LexGuard — Legal Contract Risk Detector
+# LexGuard — Legal Contract Risk Detector
 
-### *AI-powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade*
+### AI-powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade
 
 <br/>
 
-[![🚀 Live Demo on Hugging Face](https://img.shields.io/badge/🚀%20Live%20Demo-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://lexguard-app-production.up.railway.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://lexguard-app-production.up.railway.app)
 [![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
 
 <br/>
 
-> ### 👉 [**Try the Live App → lexguard-app-production.up.railway.app**](https://lexguard-app-production.up.railway.app)
+> ### [Try the Live App — lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
 > *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
 
 <br/>
 
-| 🔬 Architecture | 📊 Performance | 🗂️ Training Data | 🚀 Deployment |
+| Architecture | Performance | Training Data | Deployment |
 |:---:|:---:|:---:|:---:|
-| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on HF Spaces |
+| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Railway |
 
 </div>
+
+---
+
+## Screenshots
+
+### Hero Section
+![Hero Section](screenshots/hero.png)
+
+### Contract Analyzer
+![Contract Analyzer](screenshots/analyzer.png)
+
+### Analysis Results
+![Analysis Results Summary](screenshots/results_summary.png)
+
+### Risk Clause Detection
+![Detected Risk Clauses](screenshots/risk_clauses.png)
+
+### Contact
+![Contact Section](screenshots/contact.png)
 
 ---
 
@@ -57,33 +66,33 @@ LexGuard is a full-stack NLP system that identifies and explains risky clauses i
 ## Architecture — Confidence-Calibrated Inference Cascade (CCIC)
 
 ```
-Input Text / PDF  →  NLTK Sentence Segmentation
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────┐
-│  Tier 1: Legal-BERT (nlpaueb/legal-bert-base-uncased)    │
-│    ↓ Raw softmax probability p                           │
-│    ↓ Temperature Scaling: calibrated = sigmoid(logit(p)/T)│
-│      where T = CCIC_TEMPERATURE (default 1.5)            │
-│    ↓ calibrated ≥ τ_t (0.60)?                            │
-│      → YES: use label + pass confidence to HSE           │
-│      → NO:  fall to Tier 2 (label="None" also falls)     │
-├──────────────────────────────────────────────────────────┤
-│  Tier 2: TF-IDF + Logistic Regression                    │
-│    ↓ confidence ≥ τ_m (0.50)?                            │
-│      → YES: use label (confidence NOT passed to HSE)     │
-│      → NO:  fall to Tier 3                               │
-├──────────────────────────────────────────────────────────┤
-│  Tier 3: Keyword Matching (deterministic)                │
-│    → Always produces a label or skips the sentence       │
-└──────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+Input Text / PDF  ->  NLTK Sentence Segmentation
+                              |
+                              v
++----------------------------------------------------------+
+|  Tier 1: Legal-BERT (nlpaueb/legal-bert-base-uncased)   |
+|    -> Raw softmax probability p                          |
+|    -> Temperature Scaling: calibrated = sigmoid(logit(p)/T)|
+|       where T = CCIC_TEMPERATURE (default 1.5)          |
+|    -> calibrated >= tau_t (0.60)?                        |
+|       YES: use label + pass confidence to HSE            |
+|       NO:  fall to Tier 2 (label="None" also falls)     |
++----------------------------------------------------------+
+|  Tier 2: TF-IDF + Logistic Regression                   |
+|    -> confidence >= tau_m (0.50)?                        |
+|       YES: use label (confidence NOT passed to HSE)      |
+|       NO:  fall to Tier 3                               |
++----------------------------------------------------------+
+|  Tier 3: Keyword Matching (deterministic)               |
+|    -> Always produces a label or skips the sentence      |
++----------------------------------------------------------+
+                              |
+                              v
         Hybrid Severity Estimator (HSE)
-        S = 0.30×modal + 0.20×amplifier + 0.30×category + 0.20×confidence
-                              │
-                              ▼
-             JSON Response → Frontend Dashboard
+        S = 0.30*modal + 0.20*amplifier + 0.30*category + 0.20*confidence
+                              |
+                              v
+             JSON Response -> Frontend Dashboard
 ```
 
 ### Risk Categories (5-class taxonomy)
@@ -123,12 +132,12 @@ Four signals combined into a composite score:
 
 | Signal | Description | Weight (w/ transformer) | Weight (w/o transformer) |
 |---|---|---|---|
-| Modal verb strength | `must`→1.00, `shall`→0.90, `may`→0.25 | 30% | 40% |
-| Negation amplifiers | `unlimited`→+0.15, `not required`→−0.10 | 20% | 20% |
-| Category base weight | Liability→0.75, Arbitration→0.45 | 30% | 40% |
-| Transformer confidence | Calibrated Tier 1 score | 20% | — |
+| Modal verb strength | `must`->1.00, `shall`->0.90, `may`->0.25 | 30% | 40% |
+| Negation amplifiers | `unlimited`->+0.15, `not required`->-0.10 | 20% | 20% |
+| Category base weight | Liability->0.75, Arbitration->0.45 | 30% | 40% |
+| Transformer confidence | Calibrated Tier 1 score | 20% | -- |
 
-Thresholds: composite ≥ 0.65 → **High** · ≥ 0.35 → **Medium** · else → **Low**
+Thresholds: composite >= 0.65 -> **High** · >= 0.35 -> **Medium** · else -> **Low**
 
 ### 3. Legal-BERT Ablation Study
 
@@ -142,8 +151,8 @@ Thresholds: composite ≥ 0.65 → **High** · ≥ 0.35 → **Medium** · else �
 | Dataset | Source | Clause Types | LexGuard Sentences |
 |---|---|---|---|
 | Original | Manually annotated | 5 | 4,919 |
-| CUAD | Hendrycks et al. (2021) | 41 → 5 | ~10,000 |
-| LEDGAR | Tuggener et al. (2020) | 60+ → 5 | ~5,000 |
+| CUAD | Hendrycks et al. (2021) | 41 -> 5 | ~10,000 |
+| LEDGAR | Tuggener et al. (2020) | 60+ -> 5 | ~5,000 |
 | **Merged** | All three | 5 | **~17,000** |
 
 ---
@@ -212,8 +221,8 @@ python scripts/map_cuad.py --merge --output data/training_merged.csv
 | Variable | Default | Description |
 |---|---|---|
 | `RISK_DETECTOR` | `auto` | CCIC mode: `auto` \| `transformer` \| `ml` \| `keyword` |
-| `TRANSFORMER_THRESHOLD` | `0.60` | Tier 1 confidence threshold τ_t |
-| `ML_RISK_THRESHOLD` | `0.50` | Tier 2 confidence threshold τ_m |
+| `TRANSFORMER_THRESHOLD` | `0.60` | Tier 1 confidence threshold tau_t |
+| `ML_RISK_THRESHOLD` | `0.50` | Tier 2 confidence threshold tau_m |
 | `CCIC_TEMPERATURE` | `1.5` | Temperature scaling factor T (Guo et al., 2017) |
 | `TRANSFORMER_MODEL_DIR` | `models/transformer_risk_classifier` | Path to fine-tuned model |
 | `OPENAI_API_KEY` | *(optional)* | Enables GPT-4o-mini for /explain route |
@@ -267,13 +276,12 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
-LexGuard is containerized via Docker and deployed to **Hugging Face Spaces**.
+LexGuard is containerized via Docker and deployed to **Railway**.
 
 > [!TIP]
 > **Live Demo:** [lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
-
 
 ---
 
