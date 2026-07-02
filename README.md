@@ -12,6 +12,23 @@
 
 <br/>
 
+**Tech Stack**
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/HuggingFace_Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=flat-square&logo=openai&logoColor=white)
+
+<br/>
+
 > ### [Try the Live App — lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
 > *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
 
@@ -27,20 +44,13 @@
 
 ## Screenshots
 
-### Hero Section
-![Hero Section](screenshots/hero.png)
-
-### Contract Analyzer
-![Contract Analyzer](screenshots/analyzer.png)
-
-### Analysis Results
-![Analysis Results Summary](screenshots/results_summary.png)
-
-### Risk Clause Detection
-![Detected Risk Clauses](screenshots/risk_clauses.png)
-
-### Contact
-![Contact Section](screenshots/contact.png)
+| Section | Link |
+|---|---|
+| Hero — Landing Page | [screenshots/hero.png](screenshots/hero.png) |
+| Contract Analyzer — Upload Console | [screenshots/analyzer.png](screenshots/analyzer.png) |
+| Analysis Results — Summary Dashboard | [screenshots/results_summary.png](screenshots/results_summary.png) |
+| Risk Clause Detection — Anomaly List | [screenshots/risk_clauses.png](screenshots/risk_clauses.png) |
+| Contact — Footer | [screenshots/contact.png](screenshots/contact.png) |
 
 ---
 
