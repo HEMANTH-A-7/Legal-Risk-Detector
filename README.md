@@ -6,7 +6,7 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-0B0D0E?style=for-the-badge&logo=render&logoColor=white)](https://lexguard-app-production.up.render.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-000000?style=for-the-badge&logo=render&logoColor=46E3B7)](https://legal-risk-detector.onrender.com/)
 [![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
 
