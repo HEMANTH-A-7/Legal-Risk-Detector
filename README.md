@@ -6,7 +6,7 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://lexguard-app-production.up.railway.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-0B0D0E?style=for-the-badge&logo=render&logoColor=white)](https://lexguard-app-production.up.render.app)
 [![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
 
@@ -24,19 +24,19 @@
 ![HuggingFace](https://img.shields.io/badge/HuggingFace_Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)
+![Render](https://img.shields.io/badge/Render-0B0D0E?style=flat-square&logo=render&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=flat-square&logo=openai&logoColor=white)
 
 <br/>
 
-> ### [Try the Live App — lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
+> ### [Try the Live App — lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)
 > *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
 
 <br/>
 
 | Architecture | Performance | Training Data | Deployment |
 |:---:|:---:|:---:|:---:|
-| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Railway |
+| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Render |
 
 </div>
 
@@ -58,7 +58,7 @@
 
 > **"LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid Severity Estimation for Legal Contract Risk Detection"**
 >
-> *Research Prototype — deployed at [lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)*
+> *Research Prototype — deployed at [lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)*
 
 ---
 
@@ -288,10 +288,10 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 
 ## Deployment
 
-LexGuard is containerized via Docker and deployed to **Railway**.
+LexGuard is containerized via Docker and deployed to **Render**.
 
 > [!TIP]
-> **Live Demo:** [lexguard-app-production.up.railway.app](https://lexguard-app-production.up.railway.app)
+> **Live Demo:** [lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)
 
 ---
 
