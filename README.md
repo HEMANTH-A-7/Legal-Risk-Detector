@@ -6,7 +6,7 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-000000?style=for-the-badge&logo=render&logoColor=46E3B7)](https://legal-risk-detector.onrender.com/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
 [![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
 
@@ -24,19 +24,19 @@
 ![HuggingFace](https://img.shields.io/badge/HuggingFace_Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Render](https://img.shields.io/badge/Render-0B0D0E?style=flat-square&logo=render&logoColor=white)
+![HuggingFace Spaces](https://img.shields.io/badge/HuggingFace_Spaces-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
 ![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=flat-square&logo=openai&logoColor=white)
 
 <br/>
 
-> ### [Try the Live App — lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)
+> ### [Try the Live App — huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
 > *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
 
 <br/>
 
 | Architecture | Performance | Training Data | Deployment |
 |:---:|:---:|:---:|:---:|
-| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Render |
+| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Hugging Face Spaces |
 
 </div>
 
@@ -58,7 +58,7 @@
 
 > **"LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid Severity Estimation for Legal Contract Risk Detection"**
 >
-> *Research Prototype — deployed at [lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)*
+> *Research Prototype — deployed at [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)*
 
 ---
 
@@ -288,10 +288,10 @@ Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-b
 
 ## Deployment
 
-LexGuard is containerized via Docker and deployed to **Render**.
+LexGuard is containerized via Docker and deployed to **Hugging Face Spaces**.
 
 > [!TIP]
-> **Live Demo:** [lexguard-app-production.up.render.app](https://lexguard-app-production.up.render.app)
+> **Live Demo:** [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
 
 ---
 
