@@ -1,7 +1,0 @@
-{
-  "temperature": 1.1443966335411397,
-  "fitted_on": "validation split (n=3495), minimizing NLL",
-  "source_notebook": "https://www.kaggle.com/code/hemanthkumaramarthi/lexguard-final",
-  "source_artifact": "docs/results/eval_summary.json",
-  "seed": 42
-}

@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from flask import Flask, request, render_template, jsonify
 from werkzeug.utils import secure_filename
 
-from utils.calibration import DEFAULT_TEMPERATURE
 from utils.llm_explainer import explain_clause
 from utils.nlp_utils import (
     analyze_risks,
@@ -115,7 +114,7 @@ def analyze():
             # CCIC metadata — exposed for evaluation and paper figures
             'ccic': {
                 'mode': os.getenv('RISK_DETECTOR', 'auto'),
-                'temperature': DEFAULT_TEMPERATURE,
+                'temperature': float(os.getenv('CCIC_TEMPERATURE', '1.5')),
                 'transformer_threshold': float(os.getenv('TRANSFORMER_THRESHOLD', '0.6')),
                 'ml_threshold': float(os.getenv('ML_RISK_THRESHOLD', '0.5')),
                 'detector_distribution': detector_dist,

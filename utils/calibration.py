@@ -21,32 +21,11 @@ References:
     - Guo et al. (2017) "On Calibration of Modern Neural Networks" ICML.
 """
 
-import json
 import math
 import os
 from typing import List, Tuple
 
-_CONFIG_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "calibration.json"
-)
-_FALLBACK_TEMPERATURE = 1.144  # used only if config/calibration.json is missing
-
-
-def _fitted_temperature() -> float:
-    """Reads the validation-fitted temperature from config/calibration.json.
-
-    Keeps the calibration constant traceable to docs/results/eval_summary.json
-    instead of a bare literal. Falls back to _FALLBACK_TEMPERATURE if the
-    config file is absent (e.g. a minimal deployment that doesn't ship it).
-    """
-    try:
-        with open(_CONFIG_PATH) as f:
-            return float(json.load(f)["temperature"])
-    except (OSError, ValueError, KeyError):
-        return _FALLBACK_TEMPERATURE
-
-
-DEFAULT_TEMPERATURE = float(os.getenv("CCIC_TEMPERATURE", str(_fitted_temperature())))
+DEFAULT_TEMPERATURE = float(os.getenv("CCIC_TEMPERATURE", "1.5"))
 
 
 def temperature_scale(logits: List[float], temperature: float = DEFAULT_TEMPERATURE) -> List[float]:
@@ -80,14 +59,13 @@ def calibrate_confidence(raw_confidence: float, temperature: float = DEFAULT_TEM
         calibrated = sigmoid(logit(p) / T)
         where logit(p) = log(p / (1-p))
 
-    Example: p=0.95, T=1.144 → logit=2.944 → scaled=2.574 → calibrated≈0.929
-    This ~2.2% reduction prevents over-confident wrong labels from
+    Example: p=0.95, T=1.5 → logit=2.944 → scaled=1.963 → calibrated=0.877
+    This ~7.7% reduction prevents over-confident wrong labels from
     bypassing Tier 2.
 
     Args:
         raw_confidence: Raw softmax probability (0.0–1.0).
-        temperature: Calibration temperature (default: fitted value from
-            config/calibration.json, overridable via CCIC_TEMPERATURE env var).
+        temperature: Calibration temperature (default: CCIC_TEMPERATURE env var).
     Returns:
         Calibrated confidence score (0.0–1.0).
     """

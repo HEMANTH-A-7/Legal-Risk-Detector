@@ -1,7 +1,0 @@
-split,rows
-train,16404
-val,3495
-test,3468
-total_post_dedup,23367
-exact_dupes_dropped,158
-total_pre_dedup,23525

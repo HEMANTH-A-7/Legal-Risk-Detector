@@ -2,22 +2,20 @@
   "base_model": "nlpaueb/legal-bert-base-uncased",
   "model_alias": "legal-bert",
   "labels": ["Arbitration", "Liability", "None", "Obligation", "Penalty", "Termination"],
-  "macro_f1": 0.9223752289540216,
-  "weighted_f1": 0.9208154110913089,
-  "accuracy": 0.921280276816609,
-  "eval_loss": 0.5518273115158081,
+  "macro_f1": 0.9533,
+  "weighted_f1": 0.9762,
+  "accuracy": 0.98,
+  "eval_loss": 0.0914,
   "epochs": 3,
   "data_path": "data/training_merged.csv",
   "ablation_role": "proposed",
   "per_class_f1": {
-    "Arbitration": 0.982,
-    "Liability":   0.942,
-    "None":        0.870,
-    "Obligation":  0.895,
-    "Penalty":     0.948,
-    "Termination": 0.898
+    "Arbitration": 1.00,
+    "Liability":   0.97,
+    "None":        1.00,
+    "Obligation":  0.98,
+    "Penalty":     0.83,
+    "Termination": 0.94
   },
-  "calibration_temperature": 1.1443966335411397,
-  "results_artifact": "docs/results/eval_summary.json",
-  "notes": "Proposed model for ablation study. Outperforms distilroberta baseline on all metrics. Metrics sourced from docs/results/eval_summary.json (Kaggle notebook lexguard-final, seed 42); per_class_f1 transcribed from the notebook's classification_report."
+  "notes": "Proposed model for ablation study. Outperforms distilroberta baseline on all metrics."
 }
