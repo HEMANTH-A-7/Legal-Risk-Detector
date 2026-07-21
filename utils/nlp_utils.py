@@ -22,7 +22,7 @@ Implements the Confidence-Calibrated Inference Cascade (CCIC):
     Temperature Scaling (Guo et al., 2017) before threshold comparison.
     Calibration formula:
         calibrated = sigmoid(logit(p) / T)
-    where T = CCIC_TEMPERATURE (default 1.5).
+    where T = 1.144 (fitted on validation, config/calibration.json; overridable via CCIC_TEMPERATURE).
 
     Severity is estimated using the Hybrid Severity Estimator (HSE),
     which jointly models:
@@ -181,7 +181,7 @@ def detect_risk_transformer(sentence: str, enforce_threshold: bool):
     This corrects the known over-confidence of BERT-based models.
 
     Calibration: calibrated = sigmoid(logit(p) / T)
-    where T = CCIC_TEMPERATURE (env var, default 1.5).
+    where T = 1.144 (fitted on validation, config/calibration.json; overridable via CCIC_TEMPERATURE).
 
     Returns (label, calibrated_confidence) or (None, calibrated_confidence).
     The calibrated confidence — not raw — is passed to the HSE for severity scoring.

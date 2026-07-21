@@ -1,0 +1,7 @@
+class,f1,model
+Arbitration,0.982,Legal-BERT
+Liability,0.942,Legal-BERT
+None,0.870,Legal-BERT
+Obligation,0.895,Legal-BERT
+Penalty,0.948,Legal-BERT
+Termination,0.898,Legal-BERT
