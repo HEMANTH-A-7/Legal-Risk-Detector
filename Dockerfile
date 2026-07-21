@@ -42,5 +42,12 @@ ENV TRANSFORMER_MODEL_DIR=models/transformer_risk_classifier
 # Railway injects $PORT at runtime; fallback to 8000 for local runs
 EXPOSE ${PORT:-8000}
 
-# Run with gunicorn — 2 workers, bind to Railway's dynamic port
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-8000} -w 2 app:app"]
+# Run with gunicorn — single worker. Each worker loads its own copy of
+# torch/transformers/Legal-BERT (~830MB RSS measured locally after one request);
+# 2 workers need ~1.6GB+, well past Render free tier's 512MB RAM cap, causing
+# OOM kills mid-request. -w 1 roughly halves peak memory but may still exceed
+# 512MB — a paid plan with >=1GB RAM (or a smaller/quantized model) is the
+# actual fix; this just stops the worst-case 2x blowup. --timeout 120 gives the
+# slow first (cold) model load room to finish instead of being killed at
+# gunicorn's default 30s. Bind to Render/Railway's dynamic port.
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-8000} -w 1 --timeout 120 app:app"]
