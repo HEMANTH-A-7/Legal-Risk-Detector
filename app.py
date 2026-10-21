@@ -127,9 +127,9 @@ def analyze():
             }
         })
     except Exception as exc:
-        tb = traceback.format_exc()
-        print(f"[ANALYZE ERROR] {exc}\n{tb}", file=sys.stderr, flush=True)
-        return jsonify({'error': f'Analysis failed: {str(exc)}', 'traceback': tb}), 500
+        # Log the full traceback server-side; never return it to the client.
+        print(f"[ANALYZE ERROR] {exc}\n{traceback.format_exc()}", file=sys.stderr, flush=True)
+        return jsonify({'error': 'Analysis failed. Please try again.'}), 500
 
 
 @app.route('/explain', methods=['POST'])
@@ -157,4 +157,5 @@ def explain():
         return jsonify({"explanation": explanation, "source": "template"})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug, port=int(os.getenv("PORT", "8000")))
