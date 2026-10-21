@@ -1,0 +1,26 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # No LFS pull: the Legal-BERT weights (~400 MB) aren't needed for tests,
+      # and skipping them keeps CI off the LFS bandwidth quota.
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # The test suite stubs out Tier 1, so torch/transformers are not needed here.
+      - name: Install dependencies
+        run: pip install flask pdfplumber nltk python-dotenv scikit-learn joblib openai pytest
+
+      - name: Run tests
+        run: pytest -q
