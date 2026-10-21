@@ -1,253 +1,103 @@
-<div align="center">
+# LexGuard — Legal Contract Risk Detector
 
-# LexGuard - Legal Contract Risk Detector
+[![tests](https://github.com/HEMANTH-A-7/Legal-Risk-Detector/actions/workflows/tests.yml/badge.svg)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector/actions/workflows/tests.yml)
+[![Live demo](https://img.shields.io/badge/demo-Hugging%20Face%20Spaces-FFD21E)](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-### AI powered legal clause analysis using a 3-tier Confidence-Calibrated Inference Cascade
+Upload a contract (PDF or text) and LexGuard flags risky clauses — liability, penalty, termination, obligation, arbitration — with a severity score and a plain-English explanation.
 
-<br/>
+**[Try the live demo →](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)** (free tier — the first request after idle can take a minute while the model loads)
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
-[![GitHub](https://img.shields.io/badge/GitHub-HEMANTH--A--7%2FLegal--Risk--Detector-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/HEMANTH-A-7/Legal-Risk-Detector)
-[![License: MIT](https://img.shields.io/badge/License-MIT-6C3483?style=for-the-badge)](LICENSE)
+![LexGuard contract analyzer](screenshots/analyzer.png)
 
-<br/>
+Accepted at **ICDCIT 2027** (23rd International Conference on Distributed Computing and Intelligent Technology).
 
-**Tech Stack**
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
-![HuggingFace](https://img.shields.io/badge/HuggingFace_Transformers-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![HuggingFace Spaces](https://img.shields.io/badge/HuggingFace_Spaces-FFD21E?style=flat-square&logo=huggingface&logoColor=black)
-![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=flat-square&logo=openai&logoColor=white)
-
-<br/>
-
-> ### [Try the Live App — huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
-> *Paste a contract clause or upload a PDF — get instant risk analysis in seconds*
-
-<br/>
-
-| Architecture | Performance | Training Data | Deployment |
-|:---:|:---:|:---:|:---:|
-| 3-Tier CCIC + HSE | 94.57% Macro-F1 | ~17,000 sentences | Docker on Hugging Face Spaces |
-
-</div>
+**Stack:** Python · Flask · PyTorch / Hugging Face Transformers · scikit-learn · React + TypeScript (Vite) · Docker · Hugging Face Spaces
 
 ---
 
-## Screenshots
+## How it works
 
-| Section | Link |
-|---|---|
-| Hero — Landing Page | [screenshots/hero.png](screenshots/hero.png) |
-| Contract Analyzer — Upload Console | [screenshots/analyzer.png](screenshots/analyzer.png) |
-| Analysis Results — Summary Dashboard | [screenshots/results_summary.png](screenshots/results_summary.png) |
-| Risk Clause Detection — Anomaly List | [screenshots/risk_clauses.png](screenshots/risk_clauses.png) |
-| Contact — Footer | [screenshots/contact.png](screenshots/contact.png) |
-
----
-
-# LexGuard — A Confidence-Calibrated Inference Cascade for Legal Contract Risk Detection
-
-> **"LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid Severity Estimation for Legal Contract Risk Detection"**
->
-> *Research Prototype — deployed at [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)*
-
----
-
-## Overview
-
-LexGuard is a full-stack NLP system that identifies and explains risky clauses in legal contracts for non-lawyers. It implements **four novel research contributions** formalized for academic publication:
-
-1. **Confidence-Calibrated Inference Cascade (CCIC)** — formally defined 3-tier fallback with temperature-scaled confidence thresholds
-2. **Hybrid Severity Estimator (HSE)** — multi-signal severity model combining linguistic, semantic, and ML signals
-3. **Legal-BERT Model Upgrade** — ablation study comparing domain-adapted vs. general pre-training
-4. **Cross-Dataset Corpus Construction** — CUAD (41 clause types) + LEDGAR (60+ categories) mapped to a 5-class taxonomy
-
----
-
-## Architecture — Confidence-Calibrated Inference Cascade (CCIC)
+Each sentence goes through a three-tier cascade. A tier answers only if it is confident enough; otherwise the sentence falls through to the next, cheaper tier.
 
 ```
-Input Text / PDF  ->  NLTK Sentence Segmentation
-                              |
-                              v
-+----------------------------------------------------------+
-|  Tier 1: Legal-BERT (nlpaueb/legal-bert-base-uncased)   |
-|    -> Raw softmax probability p                          |
-|    -> Temperature Scaling: calibrated = sigmoid(logit(p)/T)|
-|       where T = CCIC_TEMPERATURE (default 1.5)          |
-|    -> calibrated >= tau_t (0.60)?                        |
-|       YES: use label + pass confidence to HSE            |
-|       NO:  fall to Tier 2 (label="None" also falls)     |
-+----------------------------------------------------------+
-|  Tier 2: TF-IDF + Logistic Regression                   |
-|    -> confidence >= tau_m (0.50)?                        |
-|       YES: use label (confidence NOT passed to HSE)      |
-|       NO:  fall to Tier 3                               |
-+----------------------------------------------------------+
-|  Tier 3: Keyword Matching (deterministic)               |
-|    -> Always produces a label or skips the sentence      |
-+----------------------------------------------------------+
-                              |
-                              v
-        Hybrid Severity Estimator (HSE)
-        S = 0.30*modal + 0.20*amplifier + 0.30*category + 0.20*confidence
-                              |
-                              v
-             JSON Response -> Frontend Dashboard
+contract (PDF / text)
+        │  pdfplumber + NLTK sentence segmentation
+        ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Tier 1  Legal-BERT (fine-tuned)                               │
+│         raw softmax p → calibrated = sigmoid(logit(p) / T)    │
+│         calibrated ≥ τ_t (0.60)?  yes → done                  │
+├──────────────────────────────────────────────────────────────┤
+│ Tier 2  TF-IDF + Logistic Regression                          │
+│         p ≥ τ_m (0.50)?           yes → done                  │
+├──────────────────────────────────────────────────────────────┤
+│ Tier 3  Keyword rules (deterministic)                         │
+└──────────────────────────────────────────────────────────────┘
+        ▼
+Severity estimator → High / Medium / Low → JSON → React dashboard
 ```
 
-### Risk Categories (5-class taxonomy)
+Severity combines four signals: modal-verb strength (*must* > *shall* > *may*), amplifier/suppressor phrases (*unlimited*, *irrevocably* vs *not required*), a per-category base weight, and the calibrated Tier 1 confidence when available.
 
-| Class | Examples |
-|---|---|
-| **Liability** | Indemnification, damages, hold harmless, cap on liability |
-| **Penalty** | Liquidated damages, late fees, surcharges, revenue restrictions |
-| **Termination** | Cancellation, breach, change of control, agreement term |
-| **Obligation** | Shall/must clauses, non-compete, audit rights, insurance |
-| **Arbitration** | Governing law, dispute resolution, jurisdiction, venue |
+## Engineering decisions
 
----
+**Why a cascade instead of one model.** A single classifier either answers wrongly or not at all when it is unsure. The cascade accepts the transformer's label only when its calibrated confidence clears a threshold, and otherwise hands the sentence to an independent model and then to deterministic rules, so every sentence gets a decision and each response records which tier made it (`detector`). In the paper's evaluation, 97% of clauses were resolved at Tier 1.
 
-## Novel Contributions
+**Why calibrate before thresholding.** Fine-tuned BERT models are over-confident, so a raw 0.95 is not a trustworthy "95% sure". Temperature scaling (Guo et al., 2017) corrects this before the threshold check, so an over-confident wrong label doesn't block the fallback tiers. In the paper, temperature scaling cut Expected Calibration Error by 48% (0.034 → 0.018).
 
-### 1. Confidence-Calibrated Inference Cascade (CCIC)
+**Graceful degradation.** If the transformer weights fail to load, the cascade continues on Tier 2; if the TF-IDF model is missing, it continues on keywords. The `/explain` endpoint uses an LLM only when `OPENAI_API_KEY` is set and otherwise returns a template explanation. These paths are covered by tests.
 
-The CCIC formalizes a 3-tier fallback pipeline where each tier only handles a sentence if the previous tier's confidence is below a configurable threshold. The key novelty is **post-hoc temperature scaling** (Guo et al., 2017) applied to transformer softmax outputs *before* threshold comparison:
+**Operational limits.** Uploads are limited to PDF/TXT and 10 MB (configurable). Errors are logged server-side and returned to clients as generic messages. The container runs one Gunicorn worker because each worker loads its own copy of the model (~830 MB RSS).
 
-```
-calibrated = sigmoid(logit(p) / T)
-where logit(p) = log(p / (1 - p))
-```
+**Everything is configurable at runtime.** Tier selection, both thresholds and the temperature are environment variables, so the cascade can be tuned or run as a single tier (for ablations) without code changes.
 
-For T=1.5 and a typical over-confident prediction p=0.95:
-- Raw: 0.95
-- Calibrated: ~0.877 (-7.7%)
+## Results
 
-This prevents over-confident but incorrect Tier 1 predictions from suppressing Tier 2, which is the critical safety property for legal risk detection.
-
-**No prior work** has formally defined or empirically evaluated this 3-tier cascade with calibrated thresholds for legal clause risk classification.
-
-### 2. Hybrid Severity Estimator (HSE)
-
-Four signals combined into a composite score:
-
-| Signal | Description | Weight (w/ transformer) | Weight (w/o transformer) |
-|---|---|---|---|
-| Modal verb strength | `must`->1.00, `shall`->0.90, `may`->0.25 | 30% | 40% |
-| Negation amplifiers | `unlimited`->+0.15, `not required`->-0.10 | 20% | 20% |
-| Category base weight | Liability->0.75, Arbitration->0.45 | 30% | 40% |
-| Transformer confidence | Calibrated Tier 1 score | 20% | -- |
-
-Thresholds: composite >= 0.65 -> **High** · >= 0.35 -> **Medium** · else -> **Low**
-
-### 3. Legal-BERT Ablation Study
-
-| Model | Pre-training | Macro-F1 | Weighted-F1 | Eval Loss |
-|---|---|---|---|---|
-| distilroberta-base (BASELINE) | General | 94.57% | 96.17% | 0.1502 |
-| nlpaueb/legal-bert-base-uncased (PROPOSED) | Legal corpus | *to be trained* | *to be trained* | *to be trained* |
-
-### 4. Cross-Dataset Corpus Construction
-
-| Dataset | Source | Clause Types | LexGuard Sentences |
-|---|---|---|---|
-| Original | Manually annotated | 5 | 4,919 |
-| CUAD | Hendrycks et al. (2021) | 41 -> 5 | ~10,000 |
-| LEDGAR | Tuggener et al. (2020) | 60+ -> 5 | ~5,000 |
-| **Merged** | All three | 5 | **~17,000** |
-
----
-
-## Setup
-
-### 1. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Configure environment
-```bash
-cp .env.example .env
-# Edit .env — set OPENAI_API_KEY if you want GPT-4o-mini explanations
-```
-
-### 3. Download NLTK data
-```bash
-python download_nltk.py
-```
-
-### 4. Run the app
-```bash
-python app.py
-# Open http://localhost:8000
-```
-
----
-
-## Training
-
-### Train ML model (CCIC Tier 2 — always needed)
-```bash
-python train_model.py --mode ml --data data/training_merged.csv
-# Saves: models/risk_classifier.joblib
-```
-
-### Fine-tune Legal-BERT (CCIC Tier 1 — PROPOSED model)
-```bash
-# Requires GPU with 6GB+ VRAM (or Google Colab T4)
-pip install -r requirements-dev.txt
-python train_model.py --mode transformer --model legal-bert \
-    --data data/training_merged.csv --epochs 3 --batch_size 16
-# Saves: models/transformer_risk_classifier/ + training_meta.json (ablation_role: proposed)
-```
-
-### Fine-tune distilroberta (CCIC Tier 1 — BASELINE for ablation)
-```bash
-python train_model.py --mode transformer --model distilroberta \
-    --data data/training_merged.csv --epochs 3 --batch_size 16
-# Saves: training_meta.json (ablation_role: baseline)
-```
-
-### Build merged training corpus (CUAD + LEDGAR)
-```bash
-pip install datasets pandas
-python scripts/map_cuad.py --dataset both
-python scripts/map_cuad.py --merge --output data/training_merged.csv
-```
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
+| | Value | Source |
 |---|---|---|
-| `RISK_DETECTOR` | `auto` | CCIC mode: `auto` \| `transformer` \| `ml` \| `keyword` |
-| `TRANSFORMER_THRESHOLD` | `0.60` | Tier 1 confidence threshold tau_t |
-| `ML_RISK_THRESHOLD` | `0.50` | Tier 2 confidence threshold tau_m |
-| `CCIC_TEMPERATURE` | `1.5` | Temperature scaling factor T (Guo et al., 2017) |
-| `TRANSFORMER_MODEL_DIR` | `models/transformer_risk_classifier` | Path to fine-tuned model |
-| `OPENAI_API_KEY` | *(optional)* | Enables GPT-4o-mini for /explain route |
-| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |
-| `MAX_UPLOAD_BYTES` | `10485760` | Max upload size (10 MB) |
+| Six-class Macro-F1 (cascade) | 92.24% | ICDCIT 2027 paper |
+| Training corpus | 23,525 samples (CUAD + LEDGAR) | ICDCIT 2027 paper |
+| Fitted temperature | T = 1.144 | ICDCIT 2027 paper |
+| ECE before → after calibration | 0.034 → 0.018 | ICDCIT 2027 paper |
+| Clauses resolved at Tier 1 | 97% | ICDCIT 2027 paper |
+| Transformer inference time | 43.7 s → 7.4 s | ICDCIT 2027 paper |
+| Shipped Legal-BERT checkpoint, held-out Macro-F1 | 95.33% | [`training_meta.json`](models/transformer_risk_classifier/training_meta.json) |
 
----
+The code has changed since the paper was submitted (for example, the default `CCIC_TEMPERATURE` is 1.5 rather than the fitted 1.144), so the paper's numbers describe the experimental setup, not necessarily the current defaults.
 
-## API Reference
+## Run locally
+
+```bash
+git lfs install && git clone https://github.com/HEMANTH-A-7/Legal-Risk-Detector
+cd Legal-Risk-Detector
+pip install -r requirements.txt
+cp .env.example .env          # optional: set OPENAI_API_KEY for LLM explanations
+python download_nltk.py
+python app.py                 # http://localhost:8000
+```
+
+Or with Docker:
+
+```bash
+docker build -t lexguard . && docker run -p 8000:8000 lexguard
+```
+
+## Tests
+
+```bash
+pip install pytest
+pytest -q
+```
+
+The suite (46 tests) covers calibration math, severity scoring, every cascade routing path including tier failures, and the HTTP API (validation, upload limits, error handling, LLM fallback). Tier 1 is stubbed, so tests run in a few seconds without torch or model weights. CI runs them on every push.
+
+## API
 
 ### `POST /analyze`
 
-Accepts `multipart/form-data` with `file` (PDF/TXT) or `text` (string).
+`multipart/form-data` with either `file` (PDF/TXT) or `text`.
 
-**Response:**
 ```json
 {
   "risks": [
@@ -278,43 +128,93 @@ Accepts `multipart/form-data` with `file` (PDF/TXT) or `text` (string).
 }
 ```
 
+`400` for a missing input or unsupported file type, `413` for an upload over the size limit.
+
 ### `POST /explain`
 
-Accepts JSON: `{ "sentence": "...", "risk_type": "Liability", "severity": "High" }`
+JSON body `{ "sentence": "...", "risk_type": "Liability", "severity": "High" }`. Returns `{ "explanation": "...", "source": "llm" | "template" }`.
 
-Returns GPT-4o-mini explanation if `OPENAI_API_KEY` is set, otherwise template-based fallback.
+## Configuration
 
----
+| Variable | Default | Description |
+|---|---|---|
+| `RISK_DETECTOR` | `auto` | `auto` (full cascade), or a single tier: `transformer`, `ml`, `keyword` |
+| `TRANSFORMER_THRESHOLD` | `0.60` | Tier 1 threshold τ_t (on calibrated confidence) |
+| `ML_RISK_THRESHOLD` | `0.50` | Tier 2 threshold τ_m |
+| `CCIC_TEMPERATURE` | `1.5` | Temperature T for calibration |
+| `TRANSFORMER_MODEL_DIR` | `models/transformer_risk_classifier` | Fine-tuned model directory |
+| `RISK_MODEL_PATH` | `models/risk_classifier.joblib` | TF-IDF + LogReg model |
+| `OPENAI_API_KEY` | *(unset)* | Enables LLM explanations on `/explain` |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Model used for explanations |
+| `OPENAI_BASE_URL` | *(unset)* | Point at any OpenAI-compatible provider |
+| `MAX_UPLOAD_BYTES` | `10485760` | Upload size limit (10 MB) |
+| `FLASK_DEBUG` | `0` | Set to `1` for the Flask debugger (local only) |
 
-## Deployment
+## Training
 
-LexGuard is containerized via Docker and deployed to **Hugging Face Spaces**.
+```bash
+pip install -r requirements-dev.txt
 
-> [!TIP]
-> **Live Demo:** [huggingface.co/spaces/Hemanth021/legal-risk-detector](https://huggingface.co/spaces/Hemanth021/legal-risk-detector)
+# Build the merged corpus from CUAD + LEDGAR
+python scripts/map_cuad.py --dataset both
+python scripts/map_cuad.py --merge --output data/training_merged.csv
 
----
+# Tier 2: TF-IDF + Logistic Regression
+python train_model.py --mode ml --data data/training_merged.csv
+
+# Tier 1: fine-tune Legal-BERT (GPU with 6 GB+ VRAM, e.g. a Colab T4)
+python train_model.py --mode transformer --model legal-bert \
+    --data data/training_merged.csv --epochs 3 --batch_size 16
+```
+
+`data/training_merged.csv` in the repo is a 4,919-sentence subset; the scripts above rebuild the full corpus.
+
+## Project layout
+
+```
+app.py                 Flask app: /analyze, /explain, serves the built frontend
+utils/
+  nlp_utils.py         Cascade orchestration, keyword tier, PDF/sentence handling
+  transformer_classifier.py   Tier 1 inference
+  ml_classifier.py     Tier 2 inference
+  calibration.py       Temperature scaling and ECE
+  severity_estimator.py       Severity scoring
+  llm_explainer.py     Optional LLM explanations
+frontend/              React + TypeScript source (built into static/dist)
+scripts/               Dataset download and preprocessing
+train_model.py         Training entry point for both tiers
+tests/                 pytest suite
+```
+
+## Known limitations
+
+- The cascade assigns one label per sentence; a clause carrying two risks reports the first.
+- Clause boundaries come from sentence segmentation, so long multi-sentence clauses are split.
+- The keyword tier is intentionally broad (e.g. any *shall* counts as an obligation) and is a last resort, not a classifier.
+- This is a research prototype, not legal advice.
+
+## Citation
+
+```bibtex
+@inproceedings{lexguard2027,
+  title     = {LexGuard: Automated Legal Risk Detection and Severity Estimation in
+               Contracts Using NLP-Driven Confidence-Calibrated Inference Cascades},
+  author    = {Amarthi, Hemanth Kumar and M, Dhanesh Sai and K, Purushottama Rao},
+  booktitle = {Proceedings of the 23rd International Conference on Distributed
+               Computing and Intelligent Technology (ICDCIT 2027)},
+  series    = {Lecture Notes in Computer Science},
+  publisher = {Springer},
+  year      = {2027}
+}
+```
 
 ## References
 
 1. Guo et al. (2017). *On Calibration of Modern Neural Networks*. ICML.
-2. Chalkidis et al. (2020). *LEGAL-BERT: The Muppets straight out of Law School*. EMNLP Findings.
+2. Chalkidis et al. (2020). *LEGAL-BERT: The Muppets straight out of Law School*. Findings of EMNLP.
 3. Hendrycks et al. (2021). *CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review*. NeurIPS.
 4. Tuggener et al. (2020). *LEDGAR: A Large-Scale Multi-label Corpus for Text Classification of Legal Provisions*. LREC.
-5. Bommarito & Katz (2022). *GPT Takes the Bar Exam*. arXiv:2212.14402.
-6. Shelley (2001). *Shall, Will, and the Modal Logic of Obligation*. Legal Writing Institute.
 
----
+## License
 
-## Citation
-
-If you use this work, please cite:
-```bibtex
-@inproceedings{lexguard2025,
-  title     = {LexGuard: A Confidence-Calibrated Inference Cascade with Hybrid
-               Severity Estimation for Legal Contract Risk Detection},
-  author    = {[Your Name]},
-  booktitle = {Proceedings of JURIX / COLING / AICL Workshop},
-  year      = {2025}
-}
-```
+[MIT](LICENSE) © Amarthi Hemanth Kumar
